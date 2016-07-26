@@ -1,0 +1,210 @@
+BStimulator()
+Purpose:	Default constructor creates a Bstimulator object that communicates with a stim100 The
+			default setup is a windows usb interface with the default VID & PID
+Inputs:
+Outputs: 
+	returns			- An object of type BStimulator
+	throws			- MaxStimulatorError exception if cannot create any more stim100 objects
+
+~BStimulator()
+Purpose: Object destructor
+Inputs:
+Outputs: 
+
+connect(BInterfaceType stimInterface, void * params)
+Purpose:	Connect to the stim100 using a usb connection.
+Inputs:
+	stimInterface	- The type of interface to use
+	usbParams		- USB parameters
+Outputs:
+	returns			- BINVALIDINTERFACE, BINTERFACETIMEOUT, BINVALIDPARAMS, BSUCCESS 
+
+disconnect()
+Purpose:	Disconnect the interface between the stim100 and the PC.
+Inputs:
+Outputs:
+	returns		- BSUCCESS, BSTIMDETACHED BDISCONNECTED 
+
+manualStimulus(UINT8 channel, BConfig configID)
+Purpose:	Send a manual stimulus to the stim100. User must send configureStimulusPattern prior.
+Inputs:
+	channel		- Output channel from 1 to 100.  Channel 0 is the internal resistance
+	configID		- The pattern ID from 1 to 15.
+Outputs:
+	returns		- BDISCONNECTED, BSTIMDETACHED, BWRITEERR, BREADERR, BECHOERR, BINVALIDCHANNEL, BINVALIDCONFIG, BEMPTYCONFIG, BNOMODULEENABLED, BNOK, BSUCCESS 
+
+measureOutputVoltage(BOutputMeasurement * output, UINT8 module, UINT8 channel)
+Purpose: Send a stimulus reporting the output voltage. Used to test modules on channel 0
+			or for testing electrode impedance.  Uses config 0.
+Inputs:
+	module		- Specific current generating module from 1 to 16. Module must be enabled.
+	channel		- Output channel from 1 to 100.  Channel 0 is the internal resistance
+Outputs:
+	returns		- BDISCONNECTED, BSTIMDETACHED, BWRITEERR, BREADERR, BECHOERR, BINVALIDMODULE, BNULLPTR, BINVALIDCHANNEL, BMODULEUNAVAILABLE, BNOK, BSUCCESS,
+	output		- Structure containing an array of 5 signed measurements in mV.
+
+beginningOfSequence()
+Purpose:	While in auto mode this command notifies the beggining of a sequence of commands.
+			The max number of commands in a sequence is 128.
+Inputs:
+Outputs:
+	returns		- BDISCONNECTED, BSTIMDETACHED, BWRITEERR, BREADERR, BECHOERR, BSEQUENCEERR, BNOK, BSUCCESS
+
+endOfSequence()
+Purpose:	While in auto mode this command notifies the end of a sequence of commands.
+			The max number of commands in a sequence is 128.
+Inputs:
+Outputs:
+	returns		- BDISCONNECTED, BSTIMDETACHED, BWRITEERR, BREADERR, BECHOERR, BSEQUENCEERR, BNOK, BSUCCESS
+
+beginningOfGroup()
+Purpose:	While in auto mode, this command notifies the begining of a group of simultaneous commands.
+			User should control that there are no more simultaneous commands than modules enabled.  They
+			need to also ensure that commands in a group don't use the same output channel.
+Inputs:
+Outputs:
+	returns		- BDISCONNECTED, BSTIMDETACHED, BWRITEERR, BREADERR, BECHOERR, BSEQUENCEERR, BNOK, BSUCCESS
+
+endOfGroup()
+Purpose:	While in auto mode, this command notifies the end of a group of simultaneous commands.
+			User should control that there are no more simultaneous commands than modules enabled.  They
+			need to also ensure that commands in a group don't use the same output channel.
+Inputs:
+Outputs:
+	returns		- BDISCONNECTED, BSTIMDETACHED, BWRITEERR, BREADERR, BECHOERR, BSEQUENCEERR, BNOK, BSUCCESS
+
+autoStimulus(UINT8 channel, BConfig configID)
+Purpose:	Sends a stimulus as part of a sequence. User must send configureStimulusPattern prior. 
+Inputs:
+	channel		- Output channel from 0x00 to 0x64.  Channel 0 is the internal resistance.
+	configID	- The pattern ID from 0x01 to 0x0F
+Outputs:
+	returns		- BDISCONNECTED, BSTIMDETACHED, BWRITEERR, BREADERR, BECHOERR, BSEQUENCEERR, BINVALIDCHANNEL, BINVALIDCONFIG, BSTIMULIMODULEERR, BCHANNELGROUPERR, BNOK, BSUCCESS
+
+wait(UINT8 miliSeconds)
+Purpose:	While in auto mode, this command injects a time delay between stimulations
+Inputs:
+	miliseconds	- Time to wait in miliseconds from 0x0000 to 0xFFFF (65535 ms)
+Outputs:
+	returns		- BDISCONNECTED, BSTIMDETACHED, BWRITEERR, BREADERR, BECHOERR, BINVALIDPARAMS, BSEQUENCEERR, BNOK, BSUCCESS
+
+play(UINT16 times)
+Purpose:	While in auto mode, this plays the stimulation sequence
+Inputs:
+	times		- The number of times to play the sequence. From 0x0000 to 0xFFFF (65535 times), 0 means infinite loop
+Outputs:
+	returns		- BDISCONNECTED, BSTIMDETACHED, BWRITEERR, BREADERR, BECHOERR, BINVALIDPARAMS, BSEQUENCEERR, BNOK, BSUCCESS
+
+stop()
+Purpose:	While in auto mode, this stops the stimulation sequence. A play after will start from the beggining.
+Inputs:
+Outputs:
+	returns		- BDISCONNECTED, BSTIMDETACHED, BWRITEERR, BREADERR, BECHOERR, BSEQUENCEERR, BNOK, BSUCCESS
+
+pause()
+Purpose:	While in auto mode, this pauses the stimulation sequence. A play after will restart from current step.
+Inputs:
+Outputs:
+	returns		- BDISCONNECTED, BSTIMDETACHED, BWRITEERR, BREADERR, BECHOERR, BSEQUENCEERR, BNOK, BSUCCESS
+
+maxOutputVoltage(BMaxOutputVoltage * output, UINT8 rw, BOCVolt voltage)
+Purpose:	To set and read the maximum output voltage limitation
+Inputs:
+	rw			- Read write command 0x00 = read current value, 0x01 = write new value and read it back.
+	voltage		- Voltage to be set if rw = 0x01, from 0x05(3.5V) to 0x0F(9.5V)
+Outputs:
+	returns		- BDISCONNECTED, BSTIMDETACHED, BWRITEERR, BREADERR, BECHOERR, BNULLPTR, BINVALIDRW, BINVALIDVOLTAGE, BVOLTAGEGREATMAX, BNOK, BSUCCESS
+	miliVolts	- The output voltage limitation in mV. Unsigned value
+
+readDeviceInfo(BDeviceInfo * output)
+Purpose:	Reads the device information from the stim100.  Firmware version, serial number, module status, protocol
+Inputs:
+Outputs:
+	returns		- BDISCONNECTED, BSTIMDETACHED, BWRITEERR, BREADERR, BECHOERR, BNULLPTR, BNOK, BSUCCESS
+	output		- Structure containing serial number, motherboard firmware version, protocol, arrays of module status and firmware version
+
+enableModule(UINT8 module)
+Purpose:	Enables modules that are plugged into the board. Modules are enabled by default
+Inputs:
+	module		- The module to enable from 1 to 16.
+Outputs:
+	returns		- BDISCONNECTED, BSTIMDETACHED, BWRITEERR, BREADERR, BECHOERR, BMODULEUNAVAILABLE, BNOK, BSUCCESS
+
+disableModule(UINT8 module)
+Purpose:	Disable a module that is plugged into the board.
+Inputs:
+	module		- The module to disable from 1 to 16.
+Outputs:
+	returns		- BDISCONNECTED, BSTIMDETACHED, BWRITEERR, BREADERR, BECHOERR, BMODULEUNAVAILABLE, BNOK, BSUCCESS
+
+configureStimulusPattern(BConfig configID, BWFType afcf, UINT8 pulses, UINT8 amp1, UINT8 amp2, UINT16 width1, UINT16 width2, UINT16 interpulse, UINT16 interphase, bool fastDischarge)
+Purpose:	Configure a stimulus pattern. 16 differnt patterns can be configured at once. Config 0 is used in output measurements
+			In config id 0, minimum widths are 162uS (0x00A2 to 0xFFFF) and interphase and interpulse are 171uS (0x00AB to 0xFFFF)
+			Amplitudes over max will be set at max, times under minimums will be set at minimums.
+Inputs:
+	configID		- Pattern ID. 0x00 for output measurements. 0x01 to 0x0F for stimulation
+	afcf			- Anodic first = 0x00, cathodic first = 0x01
+	pulses			- Number of biphasic pulses 0x01 to 0xFF (255)
+	amp1			- Amplitude of first phase in uA (215 maximum, from 0x00 to 0xD7)
+	amp2			- Amplitude of second phase in uA (215 maximum, from 0x00 to 0xD7)
+	width1			- Width of first phase in uS (44 uS minimum, from 0x002C to 0xFFFF)
+	width2			- Width of second phase in uS (44 uS minimum, from 0x002C to 0xFFFF)
+	interpulse		- Time between pulses in uS (53 uS minimum, from 0x0035 to 0xFFFF)
+	interphase		- Time between phases in uS (53 uS minimum, from 0x0035 to 0xFFFF)
+	fastDischarge	- Fast discharge during interphase and interpulses. No = 0x00, Yes = 0x01.
+Outputs:
+	returns			- BDISCONNECTED, BSTIMDETACHED, BWRITEERR, BREADERR, BECHOERR, BINVALIDCONFIG, BINVALIDAFCF, BINVALIDPULSES, BINVALIDAMPL, BINVALIDWIDTH,
+					  BINVALIDINTERPULSE, BINVALIDINTEPRHASE, BINVALIDFASTDISCHARGE, BPHASENOTBALANCED, BPHASEGREATMAX, BAMPGREATMAX, 
+					  BWIDTHGREATMAX, BINTERPULSEGREATMAX, BINTERPHASEGREATMAX, BNOK, BSUCCESS
+
+readStimulusPattern(BStimulusConfiguration * output, BConfig configID)
+Purpose:	To read back the configuration of a stimulus pattern.
+Inputs:
+	configID		- The pattern ID from 0 to 15. 0 for output measurement, 1 to 15 for stimulation
+Outputs:
+	returns			- BDISCONNECTED, BSTIMDETACHED, BWRITEERR, BREADERR, BECHOERR, BNULLPTR, BINVALIDCONFIG, BEMPTYCONFIG, BNOK, BSUCCESS
+	output			- Structure containing AFCF, PULSES, AMP1 AMP2, WIDTH1, WIDTH2, INTERPULSE, INTERPHASE, FASTDISCHARGE 
+
+readSequenceStatus(BSequenceStatus * output)
+Purpose:	To read the status of a sequence
+Inputs:
+Outputs:
+	returns			- BDISCONNECTED, BSTIMDETACHED, BWRITEERR, BREADERR, BECHOERR, BNULLPTR, BNOK, BSUCCESS
+	sequenceStatus	- Unsigned int, 0 = stop, 1 = playing, 2 = pause, 3 = writing sequence
+
+stimulusMaxValues(BMaximumValues * output, UINT8 rw, BOCVolt voltage, UINT8 amplitude, UINT16 width, UINT16 interphase, UINT16 interpulse, UINT32 phaseCharge)
+Purpose: To set and read absolute maximum value limitations.  The stim100 will always return the current maximum values.
+Inputs:
+	rw				- Read = 0x00, Write = 0x01.  The values will be sent back after a write.
+	voltage			- Max output voltage from 0x05 to 0x0F.
+	amplitude		- Max amplitude per phase in uA (215 maximum, from 0x00 to 0xD7)
+	width			- Max Width of either phase in uS (44 uS minimum, from 0x002C to 0xFFFF)
+	interphase		- Max Time between phases in uS (53 uS minimum, from 0x0035 to 0xFFFF)
+	interpulse		- Max Time between pulses in uS (53 uS minimum, from 0x0035 to 0xFFFF)
+	phaseCharge		- Max charge per phase in pC (from 0x00000000 to 0xFFFFFFFF)
+Outputs:
+	returns			- BDISCONNECTED, BWRITEERR, BREADERR, BECHOERR, BNULLPTR, BINVALIDRW, BINVALIDVOLTAGE, BINVALIDAMPL, BINVALIDWIDTH,
+					  BINVALIDINTERPULSE, BINVALIDINTERPHASE, BPHASELESSAMPWIDTH, BNOK, BSUCCESS
+	output			- Structure that contains VOLTAGE, AMPLITUDE, WIDTH, INTERPHASE, INTERPULSE, PHASECHARGE
+
+groupStimulus(UINT8 number, BGroupStimulus * input)
+Purpose:	one command to setup a whole group of simultaneous stimulations at once and have them fire.
+Inputs:
+	number:			-UINT8 specifying how many simultaneous stimulations to do at once
+	input:			-Struct containing two arrays, one for channels(1-100) and one for pattern configurations(1-15)
+Outputs:
+	returns			- BDISCONNECTED, BWRITEERR, BREADERR, BECHOERR, BNULLPTR, BNOK, BSUCCESS, BINVALIDCHANNEL, BINVALIDCONFIG, BSEQUENCEERR, BSTIMULIMODULEERR, BCHANNELGROUPERR, BINVALIDGROUPNUMBER
+
+testElectrodes(BTestElectrodes * output)
+Purpose:	To check the impedance of all electrodes
+Inputs:
+Outputs:
+	returns			- BDISCONNECTED, BWRITEERR, BREADERR, BECHOERR, BNULLPTR, BNOK, BSUCCESS, BINVALIDCHANNEL, BMODULEUNAVAILABLE
+	output			- UINT16 electrodes[100] Value in K OHMS of impedance for each electrode
+
+testModules(BTestModules * output)
+Purpose:	To check the status of all current modules
+Inputs:
+Outputs:
+	returns			- BDISCONNECTED, BWRITEERR, BREADERR, BECHOERR, BNULLPTR, BNOK, BSUCCESS, BINVALIDCHANNEL, BMODULEUNAVAILABLE
+	output			- UINT16 modulesMV[16] voltage in mV, BModuleStatus modulesOk[16] BMODULE_OK, BMODULE_VOLTAGELIMITATION,
