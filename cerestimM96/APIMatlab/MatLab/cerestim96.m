@@ -56,16 +56,52 @@ classdef cerestim96 < handle
     properties (SetAccess = private, Hidden = true)
         objectHandle; % Handle to the underlying C++ class instance
     end
+    properties (SetAccess = private, GetAccess = public)
+        environment
+    end
     methods
         %% Constructor - Create a new C++ class instance 
         function this = cerestim96(varargin)
-            this.objectHandle = stimmex('init');
+            %constructor. With no input this constructor assumes the
+            %stimulator is a cerestim96, and sets the environment string to
+            %'cerestim96':
+            %BStimulator=cerestim96();
+            %If the user chooses, they may call the constructor with a 
+            %single input that forces the environment to be either 
+            %'cerestim96' or 'stim100':
+            %BStimulator=cerestim96(envString);
+            %
+            if isempty(varargin)
+                this.environment='cerestim96';
+            else
+                if numel(varargin)>1
+                    error('cerestim96:tooManyInputs','constructor only accepts a single input')
+                elseif ~ischar(varargin{1})
+                    error('cerestim96:environmentNotString','constructor only accepts the environment specifier as a string')
+                end
+                if ~strcmp(varargin{1},'cerestim96') && ~strcmp(varargin{1},'stim100')
+                    error('cerestim96:unrecognizedEnvironment','only cerestim96 and stim100 are valid environemnts')
+                end
+                this.environment=varargin{1};
+            end
+            
+            switch this.environment
+                case 'stim100'
+                    error('cerestim96:noInit','init not defined for stim100 environment')
+                case 'cerestim96'
+                    this.objectHandle = stimmex('init');
+            end
         end
         
         %% Destructor - Destroy the C++ class instance
         function delete(this)
             % Deletes a class object
-            stimmex('delete', this.objectHandle);            
+            switch this.environment
+                case 'stim100'
+                    error('cerestim96:noDelete','delete not defined for stim100 environment')
+                case 'cerestim96'
+                    stimmex('delete', this.objectHandle); 
+            end
         end
 
         %% User Interface Functions
@@ -81,10 +117,19 @@ classdef cerestim96 < handle
 			%					      timeout is the time in ms to try to connect before timeout
 			%					      vid is the vendor ID
             
-            if nargout
-                [x] = stimmex('connect', this.objectHandle, varargin{:});
-            else
-                stimmex('connect', this.objectHandle, varargin{:});
+            switch this.environment
+                case 'stim100'
+                    if nargout
+                        [x] = stim100mex('connect', this.objectHandle, varargin{:});
+                    else
+                        stim100mex('connect', this.objectHandle, varargin{:});
+                    end
+                case 'cerestim96'
+                    if nargout
+                        [x] = stimmex('connect', this.objectHandle, varargin{:});
+                    else
+                        stimmex('connect', this.objectHandle, varargin{:});
+                    end
             end
         end
         
@@ -92,10 +137,19 @@ classdef cerestim96 < handle
             % Disconnects the CereStim 96 Stimulator
             % Format: 	cerestim_object.disconnect()
             
-            if nargout
-                [x] = stimmex('disconnect', this.objectHandle, varargin{:});
-            else
-                stimmex('disconnect', this.objectHandle, varargin{:});
+            switch this.environment
+                case 'stim100'
+                    if nargout
+                        [x] = stim100mex('disconnect', this.objectHandle, varargin{:});
+                    else
+                        stim100mex('disconnect', this.objectHandle, varargin{:});
+                    end
+                case 'cerestim96'
+                    if nargout
+                        [x] = stimmex('disconnect', this.objectHandle, varargin{:});
+                    else
+                        stimmex('disconnect', this.objectHandle, varargin{:});
+                    end
             end
         end
         
@@ -103,10 +157,14 @@ classdef cerestim96 < handle
             % Prints the current version of the API that is being used
             % Format:	cerestim_object.libraryVersion()
             
-            if nargout
-                [x] = stimmex('libver', this.objectHandle, varargin{:});
-            else
-                stimmex('libver', this.objectHandle, varargin{:});
+            switch this.environment
+                case 'stim100'
+                case 'cerestim96'
+                    if nargout
+                        [x] = stimmex('libver', this.objectHandle, varargin{:});
+                    else
+                        stimmex('libver', this.objectHandle, varargin{:});
+                    end
             end
         end
         
@@ -116,10 +174,15 @@ classdef cerestim96 < handle
 			% Inputs:
 			%	electrode:	The electrode that should be stimulated (1-96)
 			%	waveform:	The stimulation waveform to use (1-15)
-            if nargout
-                [x] = stimmex('manualstim', this.objectHandle, varargin{:});
-            else
-                stimmex('manualstim', this.objectHandle, varargin{:});
+            
+            switch this.environment
+                case 'stim100'
+                case 'cerestim96'
+                    if nargout
+                        [x] = stimmex('manualstim', this.objectHandle, varargin{:});
+                    else
+                        stimmex('manualstim', this.objectHandle, varargin{:});
+                    end
             end
         end
         
@@ -136,10 +199,14 @@ classdef cerestim96 < handle
 			% Outputs:
 			%	x:			Voltage measurements at five locations in stimulation cycle
             
-            if nargout
-                [x] = stimmex('measureoutv', this.objectHandle, varargin{:});
-            else
-                stimmex('measureoutv', this.objectHandle, varargin{:});
+            switch this.environment
+                case 'stim100'
+                case 'cerestim96'
+                    if nargout
+                        [x] = stimmex('measureoutv', this.objectHandle, varargin{:});
+                    else
+                        stimmex('measureoutv', this.objectHandle, varargin{:});
+                    end
             end
         end
         
@@ -151,10 +218,19 @@ classdef cerestim96 < handle
 			% 'begofseq' and 'endofseq'
 			% Format: 	cerestim_object.beginSequence()
             
-            if nargout
-                [x] = stimmex('begofseq', this.objectHandle, varargin{:});
-            else
-                stimmex('begofseq', this.objectHandle, varargin{:});
+            switch this.environment
+                case 'stim100'
+                    if nargout
+                        [x] = stim100mex('beginningOfSequence', this.objectHandle, varargin{:});
+                    else
+                        stim100mex('beginningOfSequence', this.objectHandle, varargin{:});
+                    end
+                case 'cerestim96'
+                    if nargout
+                        [x] = stimmex('begofseq', this.objectHandle, varargin{:});
+                    else
+                        stimmex('begofseq', this.objectHandle, varargin{:});
+                    end
             end
         end        
 
@@ -162,10 +238,19 @@ classdef cerestim96 < handle
             % Defines the end of a stimulation sequence
             % Format: 	cerestim_object.endSequence()
             
-            if nargout
-                [x] = stimmex('endofseq', this.objectHandle, varargin{:});
-            else
-                stimmex('endofseq', this.objectHandle, varargin{:});
+            switch this.environment
+                case 'stim100'
+                    if nargout
+                        [x] = stim100mex('endOfSequence', this.objectHandle, varargin{:});
+                    else
+                        stim100mex('endOfSequence', this.objectHandle, varargin{:});
+                    end
+                case 'cerestim96'
+                    if nargout
+                        [x] = stimmex('endofseq', this.objectHandle, varargin{:});
+                    else
+                        stimmex('endofseq', this.objectHandle, varargin{:});
+                    end
             end
         end       
         
@@ -176,10 +261,19 @@ classdef cerestim96 < handle
 			% stimulations depends on the number of modules installed.
 			% Format: 	cerestim_object.beginGroup()
             
-            if nargout
-                [x] = stimmex('begofgroup', this.objectHandle, varargin{:});
-            else
-                stimmex('begofgroup', this.objectHandle, varargin{:});
+            switch this.environment
+                case 'stim100'
+                    if nargout
+                        [x] = stim100mex('beginningOfGroup', this.objectHandle, varargin{:});
+                    else
+                        stim100mex('beginningOfGroup', this.objectHandle, varargin{:});
+                    end
+                case 'cerestim96'
+                    if nargout
+                        [x] = stimmex('begofgroup', this.objectHandle, varargin{:});
+                    else
+                        stimmex('begofgroup', this.objectHandle, varargin{:});
+                    end
             end
         end       
         
@@ -190,10 +284,19 @@ classdef cerestim96 < handle
 			% stimulations depends on the number of modules installed.
 			% Format: 	cerestim_object.endGroup()
             
-            if nargout
-                [x] = stimmex('endofgroup', this.objectHandle, varargin{:});
-            else
-                stimmex('endofgroup', this.objectHandle, varargin{:});
+            switch this.environment
+                case 'stim100'
+                    if nargout
+                        [x] = stim100mex('endOfGroup', this.objectHandle, varargin{:});
+                    else
+                        stim100mex('endOfGroup', this.objectHandle, varargin{:});
+                    end
+                case 'cerestim96'
+                    if nargout
+                        [x] = stimmex('endofgroup', this.objectHandle, varargin{:});
+                    else
+                        stimmex('endofgroup', this.objectHandle, varargin{:});
+                    end
             end
         end       
         
@@ -207,10 +310,19 @@ classdef cerestim96 < handle
 			%	electrode:	The electrode that should be stimulated (1-96)
 			%	waveform:	The stimulation waveform to use (1-15)
             
-            if nargout
-                [x] = stimmex('autostim', this.objectHandle, varargin{:});
-            else
-                stimmex('autostim', this.objectHandle, varargin{:});
+            switch this.environment
+                case 'stim100'
+                    if nargout
+                        [x] = stim100mex('autoStimulus', this.objectHandle, varargin{:});
+                    else
+                        stim100mex('autoStimulus', this.objectHandle, varargin{:});
+                    end
+                case 'cerestim96'
+                    if nargout
+                        [x] = stimmex('autostim', this.objectHandle, varargin{:});
+                    else
+                        stimmex('autostim', this.objectHandle, varargin{:});
+                    end
             end
         end       
         
@@ -221,10 +333,14 @@ classdef cerestim96 < handle
 			% Inputs:
 			%	milliseconds: The number of milliseconds to wait before executing the next command
             
-            if nargout
-                [x] = stimmex('wait', this.objectHandle, varargin{:});
-            else
-                stimmex('wait', this.objectHandle, varargin{:});
+            switch this.environment
+                case 'stim100'
+                case 'cerestim96'
+                    if nargout
+                        [x] = stimmex('wait', this.objectHandle, varargin{:});
+                    else
+                        stimmex('wait', this.objectHandle, varargin{:});
+                    end
             end
         end       
         
@@ -237,10 +353,19 @@ classdef cerestim96 < handle
 			% Inputs:
 			%	repetition: Number of times to execute the stimulation script.
             
-            if nargout
-                [x] = stimmex('play', this.objectHandle, varargin{:});
-            else
-                stimmex('play', this.objectHandle, varargin{:});
+            switch this.environment
+                case 'stim100'
+                    if nargout
+                        [x] = stim100mex('play', this.objectHandle, varargin{:});
+                    else
+                        stim100mex('play', this.objectHandle, varargin{:});
+                    end
+                case 'cerestim96'
+                    if nargout
+                        [x] = stimmex('play', this.objectHandle, varargin{:});
+                    else
+                        stimmex('play', this.objectHandle, varargin{:});
+                    end
             end
         end       
         
@@ -251,10 +376,14 @@ classdef cerestim96 < handle
             % stimulating or paused.
 			% Format: 	cerestim_object.stop()
             
-            if nargout
-                [x] = stimmex('stop', this.objectHandle, varargin{:});
-            else
-                stimmex('stop', this.objectHandle, varargin{:});
+            switch this.environment
+                case 'stim100'
+                case 'cerestim96'
+                    if nargout
+                        [x] = stimmex('stop', this.objectHandle, varargin{:});
+                    else
+                        stimmex('stop', this.objectHandle, varargin{:});
+                    end
             end
         end       
         
@@ -264,10 +393,14 @@ classdef cerestim96 < handle
             % so if it receives a play command it can pick up where it left off.
 			% Format: 	cerestim_object.pause()
             
-            if nargout
-                [x] = stimmex('pause', this.objectHandle, varargin{:});
-            else
-                stimmex('pause', this.objectHandle, varargin{:});
+            switch this.environment
+                case 'stim100'
+                case 'cerestim96'
+                    if nargout
+                        [x] = stimmex('pause', this.objectHandle, varargin{:});
+                    else
+                        stimmex('pause', this.objectHandle, varargin{:});
+                    end
             end
         end 
         
@@ -294,10 +427,14 @@ classdef cerestim96 < handle
 			% Outputs:
 			%	x:		Voltage level in millivolts
             
-            if nargout
-                [x] = stimmex('maxoutputv', this.objectHandle, varargin{:});
-            else
-                stimmex('maxoutputv', this.objectHandle, varargin{:});
+            switch this.environment
+                case 'stim100'
+                case 'cerestim96'
+                    if nargout
+                        [x] = stimmex('maxoutputv', this.objectHandle, varargin{:});
+                    else
+                        stimmex('maxoutputv', this.objectHandle, varargin{:});
+                    end
             end
         end 
         
@@ -310,10 +447,19 @@ classdef cerestim96 < handle
 			%	   with the current modules, the status of the modules and the firmware version
 			%	   that the modules are using.
             
-            if nargout
-                [x] = stimmex('readdevinfo', this.objectHandle, varargin{:});
-            else
-                stimmex('readdevinfo', this.objectHandle, varargin{:});
+            switch this.environment
+                case 'stim100'
+                    if nargout
+                        [x] = stim100mex('readDeviceInfo', this.objectHandle, varargin{:});
+                    else
+                        stim100mex('readDeviceInfo', this.objectHandle, varargin{:});
+                    end
+                case 'cerestim96'
+                    if nargout
+                        [x] = stimmex('readdevinfo', this.objectHandle, varargin{:});
+                    else
+                        stimmex('readdevinfo', this.objectHandle, varargin{:});
+                    end
             end
         end 
         
@@ -323,12 +469,15 @@ classdef cerestim96 < handle
 			% Inputs:
 			%	modules: An array with the module numbers to be enabled (1-16)
             
-            if nargout
-                [x] = stimmex('enablemodule', this.objectHandle, varargin{:});
-            else
-                stimmex('enablemodule', this.objectHandle, varargin{:});
+            switch this.environment
+                case 'stim100'
+                case 'cerestim96'
+                    if nargout
+                        [x] = stimmex('enablemodule', this.objectHandle, varargin{:});
+                    else
+                        stimmex('enablemodule', this.objectHandle, varargin{:});
+                    end
             end
-            
         end 
         
         function x = disableModule(this, varargin)
@@ -337,10 +486,14 @@ classdef cerestim96 < handle
 			% Inputs:
 			%	modules: An array with the module numbers to be disabled (1-16)
             
-            if nargout
-                [x] = stimmex('disablemodule', this.objectHandle, varargin{:});
-            else
-                stimmex('disablemodule', this.objectHandle, varargin{:});
+            switch this.environment
+                case 'stim100'
+                case 'cerestim96'
+                    if nargout
+                        [x] = stimmex('disablemodule', this.objectHandle, varargin{:});
+                    else
+                        stimmex('disablemodule', this.objectHandle, varargin{:});
+                    end
             end
         end 
         
@@ -358,10 +511,19 @@ classdef cerestim96 < handle
 			%	'interphase' -	Period of time between the first and second phases (53 -65,535 uS)
 			%	'frequency' -	Stimulating frequency (4 - 5000 Hz)
             
-            if nargout
-                [x] = stimmex('confpattern', this.objectHandle, varargin{:});
-            else
-                stimmex('confpattern', this.objectHandle, varargin{:});
+            switch this.environment
+                case 'stim100'
+                    if nargout
+                        [x] = stim100mex('configure', this.objectHandle, varargin{:});
+                    else
+                        stim100mex('configure', this.objectHandle, varargin{:});
+                    end
+                case 'cerestim96'
+                    if nargout
+                        [x] = stimmex('confpattern', this.objectHandle, varargin{:});
+                    else
+                        stimmex('confpattern', this.objectHandle, varargin{:});
+                    end
             end
         end 
         
@@ -375,10 +537,14 @@ classdef cerestim96 < handle
 			%				the number of pulses, the time between phases in uS, and a parameter
 			%				indicating if the first phase is anodic (1) or cathodic (0)
             
-            if nargout
-                [x] = stimmex('readpattern', this.objectHandle, varargin{:});
-            else
-                stimmex('readpattern', this.objectHandle, varargin{:});
+            switch this.environment
+                case 'stim100'
+                case 'cerestim96'
+                    if nargout
+                        [x] = stimmex('readpattern', this.objectHandle, varargin{:});
+                    else
+                        stimmex('readpattern', this.objectHandle, varargin{:});
+                    end
             end
         end 
         
@@ -396,10 +562,14 @@ classdef cerestim96 < handle
 			%			3				writing
 			%			4				waiting for trigger
             
-            if nargout
-                [x] = stimmex('readseqstatus', this.objectHandle, varargin{:});
-            else
-                stimmex('readseqstatus', this.objectHandle, varargin{:});
+            switch this.environment
+                case 'stim100'
+                case 'cerestim96'
+                    if nargout
+                        [x] = stimmex('readseqstatus', this.objectHandle, varargin{:});
+                    else
+                        stimmex('readseqstatus', this.objectHandle, varargin{:});
+                    end
             end
         end 
         
@@ -418,10 +588,19 @@ classdef cerestim96 < handle
 			% Outputs:
 			%	x:				A struct containing the information described under Inputs
             
-            if nargout
-                [x] = stimmex('stimmaxvalue', this.objectHandle, varargin{:});
-            else
-                stimmex('stimmaxvalue', this.objectHandle, varargin{:});
+            switch this.environment
+                case 'stim100'
+                    if nargout
+                        [x] = stim100mex('stim_max', this.objectHandle, varargin{:});
+                    else
+                        stim100mex('stim_max', this.objectHandle, varargin{:});
+                    end
+                case 'cerestim96'
+                    if nargout
+                        [x] = stimmex('stimmaxvalue', this.objectHandle, varargin{:});
+                    else
+                        stimmex('stimmaxvalue', this.objectHandle, varargin{:});
+                    end
             end
         end 
         
@@ -439,10 +618,14 @@ classdef cerestim96 < handle
 			%	pattern:		Array of 16 elements (as number of modules) containing the configuration
 			%					pattern (waveform) to use with the corresponding channel
             
-            if nargout
-                [x] = stimmex('groupstim', this.objectHandle, varargin{:});
-            else
-                stimmex('groupstim', this.objectHandle, varargin{:});
+            switch this.environment
+                case 'stim100'
+                case 'cerestim96'
+                    if nargout
+                        [x] = stimmex('groupstim', this.objectHandle, varargin{:});
+                    else
+                        stimmex('groupstim', this.objectHandle, varargin{:});
+                    end
             end
         end 
         
@@ -458,10 +641,14 @@ classdef cerestim96 < handle
 			%			2			falling (high to low)
 			%			3			any transition
             
-            if nargout
-                [x] = stimmex('triggerstim', this.objectHandle, varargin{:});
-            else
-                stimmex('triggerstim', this.objectHandle, varargin{:});
+            switch this.environment
+                case 'stim100'
+                case 'cerestim96'
+                    if nargout
+                        [x] = stimmex('triggerstim', this.objectHandle, varargin{:});
+                    else
+                        stimmex('triggerstim', this.objectHandle, varargin{:});
+                    end
             end
         end 
         
@@ -469,10 +656,15 @@ classdef cerestim96 < handle
             % Disables trigger mode
             % Format: 	cerestim_object.disableTrigger()
             
-            if nargout
-                [x] = stimmex('stoptrigger', this.objectHandle, varargin{:});
-            else
-                stimmex('stoptrigger', this.objectHandle, varargin{:});
+            switch this.environment
+                case 'stim100'
+                    error('cerestim96:functionNotAvailable','the function to disable the trigger is not available for the stim100 environment')
+                case 'cerestim96'
+                    if nargout
+                        [x] = stimmex('stoptrigger', this.objectHandle, varargin{:});
+                    else
+                        stimmex('stoptrigger', this.objectHandle, varargin{:});
+                    end
             end
         end 
         
@@ -487,10 +679,15 @@ classdef cerestim96 < handle
 			%	bankC:	Array of 32 elements where the index represents the channel (65-96)
 			%			and the value at each position is the actual electrode number
             
-            if nargout
-                [x] = stimmex('updatemap', this.objectHandle, varargin{:});
-            else
-                stimmex('updatemap', this.objectHandle, varargin{:});
+            switch this.environment
+                case 'stim100'
+                    error('cerestim96:functionNotAvailable','the function to map channel to electrode number is not available for the stim100 environment')
+                case 'cerestim96'
+                    if nargout
+                        [x] = stimmex('updatemap', this.objectHandle, varargin{:});
+                    else
+                        stimmex('updatemap', this.objectHandle, varargin{:});
+                    end
             end
         end 
         
@@ -503,10 +700,14 @@ classdef cerestim96 < handle
 			% 	x:		A struct containing the estimated impedance for each electrode and
 			%			a 2D array with 5 voltage measurements in millivolts for each electrode
             
-            if nargout
-                [x] = stimmex('testelec', this.objectHandle, varargin{:});
-            else
-                stimmex('testelec', this.objectHandle, varargin{:});
+            switch this.environment
+                case 'stim100'
+                case 'cerestim96'
+                    if nargout
+                        [x] = stimmex('testelec', this.objectHandle, varargin{:});
+                    else
+                        stimmex('testelec', this.objectHandle, varargin{:});
+                    end
             end
         end 
         
@@ -526,10 +727,14 @@ classdef cerestim96 < handle
 			%					3				normal voltage levels
 			%					4				voltage levels below normal
             
-            if nargout
-                [x] = stimmex('testmodules', this.objectHandle, varargin{:});
-            else
-                stimmex('testmodules', this.objectHandle, varargin{:});
+            switch this.environment
+                case 'stim100'
+                case 'cerestim96'
+                    if nargout
+                        [x] = stimmex('testmodules', this.objectHandle, varargin{:});
+                    else
+                        stimmex('testmodules', this.objectHandle, varargin{:});
+                    end
             end
         end
         
@@ -543,12 +748,15 @@ classdef cerestim96 < handle
 			% Outputs:
 			%	x:		A struct containing all read hardware values
             
-            if nargout
-                [x] = stimmex('readhardval', this.objectHandle, varargin{:});
-            else
-                stimmex('readhardval', this.objectHandle, varargin{:});
+            switch this.environment
+                case 'stim100'
+                case 'cerestim96'
+                    if nargout
+                        [x] = stimmex('readhardval', this.objectHandle, varargin{:});
+                    else
+                        stimmex('readhardval', this.objectHandle, varargin{:});
+                    end
             end
-            
         end
         
         function x = disableStimulus(this, varargin)
@@ -557,12 +765,15 @@ classdef cerestim96 < handle
 			% Inputs:
 			%	waveform:	A scalar containing a waveform ID (0-15) to be disabled
             
-            if nargout
-                [x] = stimmex('disablestim', this.objectHandle, varargin{:});
-            else
-                stimmex('disablestim', this.objectHandle, varargin{:});
+            switch this.environment
+                case 'stim100'
+                case 'cerestim96'
+                    if nargout
+                        [x] = stimmex('disablestim', this.objectHandle, varargin{:});
+                    else
+                        stimmex('disablestim', this.objectHandle, varargin{:});
+                    end
             end
-            
         end
         
         function x = isConnected(this, varargin)
@@ -571,12 +782,15 @@ classdef cerestim96 < handle
 			% Outputs:
 			%	x:		A logical value indicating whether connected (1) or not (0)
             
-            if nargout
-                [x] = stimmex('isconnected', this.objectHandle, varargin{:});
-            else
-                stimmex('isconnected', this.objectHandle, varargin{:});
+            switch this.environment
+                case 'stim100'
+                case 'cerestim96'
+                    if nargout
+                        [x] = stimmex('isconnected', this.objectHandle, varargin{:});
+                    else
+                        stimmex('isconnected', this.objectHandle, varargin{:});
+                    end
             end
-            
         end
         
         function x = getInterface(this, varargin)
@@ -585,12 +799,15 @@ classdef cerestim96 < handle
 			% Outputs:
 			%	x:		Type of interface used. Possible values are 0 (Default) or 1 (USB)
             
-            if nargout
-                [x] = stimmex('interface', this.objectHandle, varargin{:});
-            else
-                stimmex('interface', this.objectHandle, varargin{:});
+            switch this.environment
+                case 'stim100'
+                case 'cerestim96'
+                    if nargout
+                        [x] = stimmex('interface', this.objectHandle, varargin{:});
+                    else
+                        stimmex('interface', this.objectHandle, varargin{:});
+                    end
             end
-            
         end
         
         function [x,y] = getMinMaxAmplitude(this, varargin)
@@ -600,12 +817,16 @@ classdef cerestim96 < handle
 			%	x:		The minimum amplitude allowed
 			%	y:		The maximum amplitude allowed
             
-            if nargout
-                [x,y] = stimmex('minmaxamp', this.objectHandle, varargin{:});
-            else
-                stimmex('minmaxamp', this.objectHandle, varargin{:});
+            switch this.environment
+                case 'stim100'
+                    error('cerestim96:functionNotAvailable','the function to detect the min and max amplitude is not available for the stim100 environment')
+                case 'cerestim96'
+                    if nargout
+                        [x,y] = stimmex('minmaxamp', this.objectHandle, varargin{:});
+                    else
+                        stimmex('minmaxamp', this.objectHandle, varargin{:});
+                    end
             end
-            
         end
         
         function x = usbAddress(this, varargin)
@@ -614,12 +835,15 @@ classdef cerestim96 < handle
 			% Outputs:
 			%	x:		The USB address that the stimulator is attached to
             
-            if nargout
-                [x] = stimmex('usb', this.objectHandle, varargin{:});
-            else
-                stimmex('usb', this.objectHandle, varargin{:});
+            switch this.environment
+                case 'stim100'
+                case 'cerestim96'
+                    if nargout
+                        [x] = stimmex('usb', this.objectHandle, varargin{:});
+                    else
+                        stimmex('usb', this.objectHandle, varargin{:});
+                    end
             end
-            
         end
         
         function x = isSafetyDisabled(this, varargin)
@@ -629,12 +853,16 @@ classdef cerestim96 < handle
 			% Outputs:
 			%	x:		A logical value indicating whether safety limits are disabled (1) or not (0)
             
-            if nargout
-                [x] = stimmex('safetydisabled', this.objectHandle, varargin{:});
-            else
-                stimmex('safetydisabled', this.objectHandle, varargin{:});
+            switch this.environment
+                case 'stim100'
+                    error('cerestim96:functionNotAvailable','the function to detect the safety status is not available for the stim100 environment')
+                case 'cerestim96'
+                    if nargout
+                        [x] = stimmex('safetydisabled', this.objectHandle, varargin{:});
+                    else
+                        stimmex('safetydisabled', this.objectHandle, varargin{:});
+                    end
             end
-            
         end
         
         function x = isLocked(this, varargin)
@@ -646,10 +874,15 @@ classdef cerestim96 < handle
 			% Outputs:
 			%	x:		A logical value indicating whether locked (1) or not (0)
             
-            if nargout
-                [x] = stimmex('devicelocked', this.objectHandle, varargin{:});
-            else
-                stimmex('devicelocked', this.objectHandle, varargin{:});
+            switch this.environment
+                case 'stim100'
+                    error('cerestim96:functionNotAvailable','the function to detect locked status is not available for the stim100 environment')
+                case 'cerestim96'
+                    if nargout
+                        [x] = stimmex('devicelocked', this.objectHandle, varargin{:});
+                    else
+                        stimmex('devicelocked', this.objectHandle, varargin{:});
+                    end
             end
         end
         
