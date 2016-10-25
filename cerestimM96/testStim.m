@@ -1,5 +1,7 @@
 %test cerestim96 recording during stim:
-
+%save parameters:
+folder='E:\TestData\stimArtifact\';
+filePrefix='Chips_20161025_';
 %configure params
 amp=20;%in uA
 pWidth=200;%in us
@@ -18,7 +20,6 @@ end
 if ~stimObj.isConnected();
     error('testStim:noStimulator','could not establish connection to stimulator')
 end
-
     
 stimObj.setStimPattern('waveform',1,...
                         'polarity',0,...
@@ -30,6 +31,11 @@ stimObj.setStimPattern('waveform',1,...
                         'interphase',interphase,...
                         'frequency',freq);
     
+%quickly test the impedance of the electrodes:
+imp=testElectrodes();
+impedance=imp.impedance(2:end);
+save([folder,filePrefix,'impedance.mat'],impedance)
+
 %establish cerebus connection
 cbmex('open')
 %start file storeage app, or stop recording if already started
@@ -38,7 +44,7 @@ pause(1)
 %loop through channels and log a test file for each one:
 for j=1:96
     fNum=num2str(j,'%03d');
-    fName=['E:\TestData\stimArtifact\cerestim96ArtifactTest-unmodifiedAmp_ch',num2str(j),'stim_',num2str(nPulses),'pulse_nominalFreq',num2str(nomFreq),'HZ_',fNum];
+    fName=[folder,filePrefix,'CS96ArtifactTest-unmodifiedAmp_ch',num2str(j),'stim_',num2str(nPulses),'pulse_',num2str(nomFreq),'HZ-nomFreq_',fNum];
     %start recording:
     cbmex('fileconfig',fName,'testing stimulation artifacts',1)
     pause(.5)
@@ -52,6 +58,7 @@ for j=1:96
     %stop recording:
     cbmex('fileconfig',fName,'',0)
 end
+
 cbmex('close')
 stimObj.disconnect();
 stimObj.delete()

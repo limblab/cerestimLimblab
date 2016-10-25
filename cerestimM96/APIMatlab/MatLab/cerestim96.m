@@ -88,6 +88,7 @@ classdef cerestim96 < handle
             switch this.environment
                 case 'stim100'
                     error('cerestim96:noInit','init not defined for stim100 environment')
+                    this.objectHandle = stim100mex('init');
                 case 'cerestim96'
                     this.objectHandle = stimmex('init');
             end
@@ -99,6 +100,7 @@ classdef cerestim96 < handle
             switch this.environment
                 case 'stim100'
                     error('cerestim96:noDelete','delete not defined for stim100 environment')
+                    stim100mex('delete', this.objectHandle);
                 case 'cerestim96'
                     stimmex('delete', this.objectHandle); 
             end
@@ -159,6 +161,11 @@ classdef cerestim96 < handle
             
             switch this.environment
                 case 'stim100'
+                    if nargout
+                        [x] = stimmex('libver', this.objectHandle, varargin{:});
+                    else
+                        stimmex('libver', this.objectHandle, varargin{:});
+                    end
                 case 'cerestim96'
                     if nargout
                         [x] = stimmex('libver', this.objectHandle, varargin{:});
@@ -221,9 +228,9 @@ classdef cerestim96 < handle
             switch this.environment
                 case 'stim100'
                     if nargout
-                        [x] = stim100mex('beginningOfSequence', this.objectHandle, varargin{:});
+                        [x] = stim100mex('begofseq', this.objectHandle, varargin{:});
                     else
-                        stim100mex('beginningOfSequence', this.objectHandle, varargin{:});
+                        stim100mex('begofseq', this.objectHandle, varargin{:});
                     end
                 case 'cerestim96'
                     if nargout
@@ -241,9 +248,9 @@ classdef cerestim96 < handle
             switch this.environment
                 case 'stim100'
                     if nargout
-                        [x] = stim100mex('endOfSequence', this.objectHandle, varargin{:});
+                        [x] = stim100mex('endofseq', this.objectHandle, varargin{:});
                     else
-                        stim100mex('endOfSequence', this.objectHandle, varargin{:});
+                        stim100mex('endofseq', this.objectHandle, varargin{:});
                     end
                 case 'cerestim96'
                     if nargout
@@ -264,9 +271,9 @@ classdef cerestim96 < handle
             switch this.environment
                 case 'stim100'
                     if nargout
-                        [x] = stim100mex('beginningOfGroup', this.objectHandle, varargin{:});
+                        [x] = stim100mex('begofgroup', this.objectHandle, varargin{:});
                     else
-                        stim100mex('beginningOfGroup', this.objectHandle, varargin{:});
+                        stim100mex('begofgroup', this.objectHandle, varargin{:});
                     end
                 case 'cerestim96'
                     if nargout
@@ -342,7 +349,7 @@ classdef cerestim96 < handle
                         stimmex('wait', this.objectHandle, varargin{:});
                     end
             end
-        end       
+        end
         
         function x = play(this, varargin)
             % Tells the CereStim 96 the number of times that it should run a stimulation script
@@ -450,9 +457,9 @@ classdef cerestim96 < handle
             switch this.environment
                 case 'stim100'
                     if nargout
-                        [x] = stim100mex('readDeviceInfo', this.objectHandle, varargin{:});
+                        [x] = stim100mex('readdevinfo', this.objectHandle, varargin{:});
                     else
-                        stim100mex('readDeviceInfo', this.objectHandle, varargin{:});
+                        stim100mex('readdevinfo', this.objectHandle, varargin{:});
                     end
                 case 'cerestim96'
                     if nargout
@@ -471,11 +478,16 @@ classdef cerestim96 < handle
             
             switch this.environment
                 case 'stim100'
+                    if nargout
+                        [x] = stim100mex('enablemodule', this.objectHandle, varargin{:});
+                    else
+                        stim100mex('enablemodule', this.objectHandle, varargin{:});
+                    end
                 case 'cerestim96'
                     if nargout
-                        [x] = stimmex('enablemodule', this.objectHandle, varargin{:});
+                        [x] = stim100mex('enablemodule', this.objectHandle, varargin{:});
                     else
-                        stimmex('enablemodule', this.objectHandle, varargin{:});
+                        stim100mex('enablemodule', this.objectHandle, varargin{:});
                     end
             end
         end 
@@ -488,6 +500,11 @@ classdef cerestim96 < handle
             
             switch this.environment
                 case 'stim100'
+                    if nargout
+                        [x] = stim100mex('disablemodule', this.objectHandle, varargin{:});
+                    else
+                        stim100mex('disablemodule', this.objectHandle, varargin{:});
+                    end
                 case 'cerestim96'
                     if nargout
                         [x] = stimmex('disablemodule', this.objectHandle, varargin{:});
@@ -514,9 +531,9 @@ classdef cerestim96 < handle
             switch this.environment
                 case 'stim100'
                     if nargout
-                        [x] = stim100mex('configure', this.objectHandle, varargin{:});
+                        [x] = stim100mex('confpattern', this.objectHandle, varargin{:});
                     else
-                        stim100mex('configure', this.objectHandle, varargin{:});
+                        stim100mex('confpattern', this.objectHandle, varargin{:});
                     end
                 case 'cerestim96'
                     if nargout
@@ -539,6 +556,11 @@ classdef cerestim96 < handle
             
             switch this.environment
                 case 'stim100'
+                    if nargout
+                        [x] = stim100mex('readpattern', this.objectHandle, varargin{:});
+                    else
+                        stim100mex('readpattern', this.objectHandle, varargin{:});
+                    end
                 case 'cerestim96'
                     if nargout
                         [x] = stimmex('readpattern', this.objectHandle, varargin{:});
@@ -564,6 +586,11 @@ classdef cerestim96 < handle
             
             switch this.environment
                 case 'stim100'
+                    if nargout
+                        [x] = stim100mex('readseqstatus', this.objectHandle, varargin{:});
+                    else
+                        stim100mex('readseqstatus', this.objectHandle, varargin{:});
+                    end
                 case 'cerestim96'
                     if nargout
                         [x] = stimmex('readseqstatus', this.objectHandle, varargin{:});
@@ -643,6 +670,7 @@ classdef cerestim96 < handle
             
             switch this.environment
                 case 'stim100'
+                    error('cerestim96:functionNotAvailable','the function to set a trigger is not available in the stim100 environment');
                 case 'cerestim96'
                     if nargout
                         [x] = stimmex('triggerstim', this.objectHandle, varargin{:});
@@ -702,6 +730,11 @@ classdef cerestim96 < handle
             
             switch this.environment
                 case 'stim100'
+                    if nargout
+                        [x] = stim100mex('testelec', this.objectHandle, varargin{:});
+                    else
+                        stim100mex('testelec', this.objectHandle, varargin{:});
+                    end
                 case 'cerestim96'
                     if nargout
                         [x] = stimmex('testelec', this.objectHandle, varargin{:});
@@ -729,6 +762,11 @@ classdef cerestim96 < handle
             
             switch this.environment
                 case 'stim100'
+                    if nargout
+                        [x] = stim100mex('testmodules', this.objectHandle, varargin{:});
+                    else
+                        stim100mex('testmodules', this.objectHandle, varargin{:});
+                    end
                 case 'cerestim96'
                     if nargout
                         [x] = stimmex('testmodules', this.objectHandle, varargin{:});
@@ -798,9 +836,24 @@ classdef cerestim96 < handle
             % Format:	x = cerestim_object.getInterface()
 			% Outputs:
 			%	x:		Type of interface used. Possible values are 0 (Default) or 1 (USB)
+            %
+            % in the stim100 environment, values can be:
+            %0  -   default (windows usb)
+            %1  -   windows usb
+            %2  -   windows rs232
+            %3  -   unix usb
+            %4  -   unix rs232
+            %5  -   mac usb
+            %6  -   mac rs232
+            
             
             switch this.environment
                 case 'stim100'
+                    if nargout
+                        [x] = stim100mex('interface', this.objectHandle, varargin{:});
+                    else
+                        stim100mex('interface', this.objectHandle, varargin{:});
+                    end
                 case 'cerestim96'
                     if nargout
                         [x] = stimmex('interface', this.objectHandle, varargin{:});
