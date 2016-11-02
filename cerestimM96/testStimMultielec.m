@@ -1,7 +1,7 @@
 %test cerestim96 recording during stim:
 
 %configure stim params
-amp=20;%in uA
+amp=10;%in uA
 pWidth=200;%in us
 interphase=53;
 interpulse=53;
@@ -9,11 +9,10 @@ freq=floor(1/((2*pWidth+interphase+interpulse)*10^-6));%hz
 nPulses=1;
 nomFreq=10;
 nTests=100;
-chanList=[1:96];
+chanList=[18,29,52,65,89];
 
 %save params
-folder='D:\Data\Chips\STIMRECORD\';
-prefix='Chips_20161102_CObump_flipPolarity_CS96unmodAmp_';
+prefix='D:\Data\Chips\STIMRECORD\Chips_20161102_CObump_flipPolarity_CS96unmodAmp_5chanStim_';
 
 if ~exist('stimObj','var')
     stimObj=cerestim96;
@@ -24,7 +23,7 @@ end
 if ~stimObj.isConnected();
     error('testStim:noStimulator','could not establish connection to stimulator')
 end
-
+%establish waveforms
 stimObj.setStimPattern('waveform',1,...
                         'polarity',0,...
                         'pulses',nPulses,...
@@ -42,40 +41,46 @@ stimObj.setStimPattern('waveform',1,...
                         'width1',pWidth,...
                         'width2',pWidth,...
                         'interphase',interphase,...
-                        'frequency',freq);   
-%test and save impedance:
-impedanceData=stimObj.testElectrodes();
-save([folder,'impedance.mat'],'impedanceData','-v7.3')
-                    
+                        'frequency',freq); 
+%build sequence of 2 pulses on all of the listed channels:
+stimObj.beginSequence()
+%     stimObj.groupStimulus(1,0,1,numel(chanList),chanList,ones(size(chanList)))
+%     stimObj.groupStimulus(0,0,1,numel(chanList),chanList,2*ones(size(chanList)))
+    stimObj.beginGroup()
+        for k=1:numel(chanList)
+            stimObj.autoStim(chanList(k),1)
+        end
+    stimObj.endGroup()
+    stimObj.wait(100)
+    stimObj.beginGroup()
+        for k=1:numel(chanList)
+            stimObj.autoStim(chanList(k),2)
+        end
+    stimObj.endGroup()
+stimObj.endSequence()
 %establish cerebus connection
 cbmex('open')
 %start file storeage app, or stop recording if already started
 fName='temp';
 cbmex('fileconfig',fName,'',0)
 pause(1)
-%loop through channels and log a test file for each one:
-for j=1:numel(chanList)
-    disp(['working on chan: ',num2str(chanList(j))])
-    fNum=num2str(j,'%03d');
-    fName=[folder,prefix,'_chan',num2str(chanList(j)),'stim_',num2str(amp),'uA_',num2str(nPulses),'pulse_',num2str(nomFreq),'HZ_nominalFreq_',fNum];
+
+    disp(['stimulating'])
+    fNum=num2str(1,'%03d');
+    fName=[prefix,'_',num2str(amp),'uA-stim_',num2str(nPulses),'pulse_',num2str(nomFreq),'HZ_nominalFreq_',fNum];
     %start recording:
     cbmex('fileconfig',fName,'testing stimulation artifacts',1)
     pause(.5)
     %deliver our stimuli:
-    for i=1:nTests
+    for i=1:2:nTests
     %    x=stimObj.getSequenceStatus();
-        if mod(i,2)
-            stimObj.manualStim(chanList(j),1);
-        else
-            stimObj.manualStim(chanList(j),2);
-        end
-        pause(1/nomFreq+rand/20);%wait a bit to get different timings relative to cerebus clock
+        stimObj.play(1)%plays the scripted sequence of stimuli
+        pause(2/nomFreq+rand/20);%wait a bit to get different timings relative to cerebus clock
     end
     pause(.5)
     %stop recording:
     cbmex('fileconfig',fName,'',0)
-    pause(1)%let the file storage app compose itself before we return to the top of the loop
-end
+
 cbmex('close')
 stimObj.disconnect();
 stimObj.delete()
