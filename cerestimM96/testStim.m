@@ -1,7 +1,7 @@
 %test cerestim96 recording during stim:
 
 %configure stim params
-amp=20;%in uA
+amp=50;%in uA
 pWidth=200;%in us
 interphase=53;
 interpulse=53;
@@ -12,8 +12,8 @@ nTests=100;
 chanList=[1:96];
 
 %save params
-folder='D:\Data\Chips\STIMRECORD\';
-prefix='Chips_20161102_CObump_flipPolarity_CS96unmodAmp_';
+folder='C:\Users\limblab\Desktop\salineStimTesting\';
+prefix='Saline_20161224_';
 
 if ~exist('stimObj','var')
     stimObj=cerestim96;
@@ -45,7 +45,7 @@ stimObj.setStimPattern('waveform',1,...
                         'frequency',freq);   
 %test and save impedance:
 impedanceData=stimObj.testElectrodes();
-save([folder,'impedance.mat'],'impedanceData','-v7.3')
+save([folder,'impedance0.mat'],'impedanceData','-v7.3')
                     
 %establish cerebus connection
 cbmex('open')
@@ -60,7 +60,7 @@ for j=1:numel(chanList)
     fName=[folder,prefix,'_chan',num2str(chanList(j)),'stim_',num2str(amp),'uA_',num2str(nPulses),'pulse_',num2str(nomFreq),'HZ_nominalFreq_',fNum];
     %start recording:
     cbmex('fileconfig',fName,'testing stimulation artifacts',1)
-    pause(.5)
+    pause(15)
     %deliver our stimuli:
     for i=1:nTests
     %    x=stimObj.getSequenceStatus();
@@ -75,6 +75,8 @@ for j=1:numel(chanList)
     %stop recording:
     cbmex('fileconfig',fName,'',0)
     pause(1)%let the file storage app compose itself before we return to the top of the loop
+    impedanceData=stimObj.testElectrodes();
+    save([folder,'impedance', num2str(j),'.mat'],'impedanceData','-v7.3')
 end
 cbmex('close')
 stimObj.disconnect();
