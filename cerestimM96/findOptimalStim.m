@@ -26,7 +26,9 @@
                 1,-1;...
                 -1,1;...
                 -1,-1]*scaleVec;
-
+%% set range of sample points over which to compute artifact error metrics:
+    %[start point, end point] in points after stimulation onset
+    errRange=[15,30];%15 points @30khz=500us, 30 points =1ms
 %% create a cerestim object:
 if ~exist('stimObj','var')
     stimObj=cerestim96;
@@ -106,44 +108,42 @@ end
         testData{i}=cbmex('trialdata',1);
     end
 %% isolate spikes and compute artifact size metric  
-    intrgralErr=
-    slopeErr=
+    intrgralErr=zeros(96,errRange(2)-errRange(1));
+    slopeErr=zeros(96,errRange(2)-errRange(1));
     for i=1:numel(testData)
-        %get the sync data out of our cell array:
+        %get the sync data from ainp16:
         syncData=
         %find our stim events in the sync data:
         stimOn=find(diff(syncData-mean(syncData)>3)>0.5);
-%         stimOff=nan(size(stimOn));
-%         tmpStimOff=find(diff(syncData-mean(syncData)>-3)>0.5);
-%         for j=1:numel(stimOn)
-%             if j<numel(stimOn)
-%                 windowEnd=stimOn(j+1);
-%             else
-%                 windowEnd=numel(syncData);
-%             end
-%             offIdx=stimOff(find((stimOff>stimOn(j)& stimOff<windowEnd),1,'first'));
-%             if ~isempty(offIdx)
-%                 stimOff(j)=offIdx;
-%             end
-%         end
-% 
-%         %remove partial trials
-%         stimOn=stimOn(~isnan(stimOff));
-%         stimOff=stimOff(~isnan(stimOff));
+        stimOff=nan(size(stimOn));
+        tmpStimOff=find(diff(syncData-mean(syncData)>-3)>0.5);
+        for j=1:numel(stimOn)
+            if j<numel(stimOn)
+                windowEnd=stimOn(j+1);
+            else
+                windowEnd=numel(syncData);
+            end
+            offIdx=stimOff(find((stimOff>stimOn(j)& stimOff<windowEnd),1,'first'));
+            if ~isempty(offIdx)
+                stimOff(j)=offIdx;
+            end
+        end
+
+        %remove partial trials
+        stimOn=stimOn(~isnan(stimOff));
+        stimOff=stimOff(~isnan(stimOff));
         
         %Get arrays of artifact for all channels
         for j=1:numel(stimOn)
             for k=1:96
                 
                 %error metric1:
-                %integral of absolute artifact magnitude from 500us post artifact to
-                %1000us post artifact
-                integralErr(i,k)=integralErr(i,k)+sum(abs())
-
+                %integral of absolute artifact magnitude within errRange
                 %error metric2: 
-                %absolute slope of artifact from 500us post artifact to 1000us post
-                %artifact
-                slopeErr(i,k)=slopeErr(i,k)+abs()
+                %absolute slope of artifact from start to end of errRange
+                [t1,t2]=computeStimErr('put artifact data here',errRange);
+                integralErr(i,k)=integralErr(i,k)+t1;
+                slopeErr(i,k)=slopeErr(i,k)+t2;
             end
         end
     
@@ -151,11 +151,15 @@ end
     
     end
     
+%% get joint error metric for stimulated channel and other channels:
     
 %% find gradient of planar fit through test points:
 
 %% find local optima along gradient
-    localOptima=
+    localMinima=
+    newErr=localMinima-1;
+    while newErr<localMinima
+    
 %% compute new test points around gradients local optima:
     %get appropriate scale for test-grid using curvature of fit to test
     %points along gradient, and noise of tests
@@ -178,4 +182,14 @@ end
     end
 %% identify quadratic optima using the results of the tests
 
-%% 
+%% functions:
+function [integralErr,slopeErr]=computeStimErr(artifactData,varargin);
+    startPoint=15;
+    endPoint=30;
+    if ~isempty(varargin)
+        startPoint=varargin{1}(1);
+        endPoint=varargin{1}(2);
+    end
+    integralErr=sum(abs(artifactData(startPoint:endPoint)));
+    slopeErr=abs(artifactData(startPoint)-artifactData(endPoint));
+end
