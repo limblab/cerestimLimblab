@@ -1,26 +1,37 @@
 %test cerestim96 recording during stim:
-<<<<<<< HEAD
+
 %save parameters:
 folder='E:\TestData\stimArtifact\';
 filePrefix='Chips_20161025_';
 %configure params
-=======
 
 %configure stim params
->>>>>>> f140a82eaeb6dbae681f2e28eb5cb90ab6d196f2
 amp=20;%in uA
 pWidth=200;%in us
+% amp1=50;%in uA
+% pWidth1=200;%in us
+% amp2=50;%in uA
+% pWidth2=200;%in us
 interphase=53;
-interpulse=53;
-freq=floor(1/((2*pWidth+interphase+interpulse)*10^-6));%hz
+% interpulse=100;
+% interpulse=150;
+ interpulse=200;
+% interpulse=250;
+% interpulse=300;
+% interpulse=350;
+% interpulse=400;
+% interpulse=450;
+% interpulse=500;
+%
+freq=floor(1/((pWidth1+pWidth2+interphase+interpulse)*10^-6));%hz
 nPulses=1;
 nomFreq=10;
 nTests=100;
-chanList=[1:96];
+chanList=[35 42 65 70 84 88];
 
 %save params
-folder='D:\Data\Chips\STIMRECORD\';
-prefix='Chips_20161102_CObump_flipPolarity_CS96unmodAmp_';
+folder='C:\data\chips\stimTesting\';
+prefix='Chips_20170131_';
 
 if ~exist('stimObj','var')
     stimObj=cerestim96;
@@ -31,42 +42,37 @@ end
 if ~stimObj.isConnected();
     error('testStim:noStimulator','could not establish connection to stimulator')
 end
-<<<<<<< HEAD
-    
-=======
 
->>>>>>> f140a82eaeb6dbae681f2e28eb5cb90ab6d196f2
+
 stimObj.setStimPattern('waveform',1,...
                         'polarity',0,...
                         'pulses',nPulses,...
-                        'amp1',amp,...
-                        'amp2',amp,...
-                        'width1',pWidth,...
-                        'width2',pWidth,...
+                        'amp1',amp1,...
+                        'amp2',amp2,...
+                        'width1',pWidth1,...
+                        'width2',pWidth2,...
                         'interphase',interphase,...
                         'frequency',freq);
-<<<<<<< HEAD
-    
-%quickly test the impedance of the electrodes:
-imp=testElectrodes();
-impedance=imp.impedance(2:end);
-save([folder,filePrefix,'impedance.mat'],impedance)
-
-=======
  stimObj.setStimPattern('waveform',2,...
                         'polarity',1,...
                         'pulses',nPulses,...
-                        'amp1',amp,...
-                        'amp2',amp,...
-                        'width1',pWidth,...
-                        'width2',pWidth,...
+                        'amp1',amp1,...
+                        'amp2',amp2,...
+                        'width1',pWidth1,...
+                        'width2',pWidth2,...
                         'interphase',interphase,...
                         'frequency',freq);   
+    
 %test and save impedance:
+t=clock;
+    t(6)=round(t(6));
+    tStr='';
+    for k=1:6
+        tStr=[tStr,num2str(t(k)),'_'];
+    end
 impedanceData=stimObj.testElectrodes();
-save([folder,'impedance.mat'],'impedanceData','-v7.3')
-                    
->>>>>>> f140a82eaeb6dbae681f2e28eb5cb90ab6d196f2
+save([folder,'impedance0',tStr,'.mat'],'impedanceData','-v7.3')
+
 %establish cerebus connection
 cbmex('open')
 %start file storeage app, or stop recording if already started
@@ -77,14 +83,19 @@ pause(1)
 for j=1:numel(chanList)
     disp(['working on chan: ',num2str(chanList(j))])
     fNum=num2str(j,'%03d');
-<<<<<<< HEAD
-    fName=[folder,filePrefix,'CS96ArtifactTest-unmodifiedAmp_ch',num2str(j),'stim_',num2str(nPulses),'pulse_',num2str(nomFreq),'HZ-nomFreq_',fNum];
-=======
-    fName=[folder,prefix,'_chan',num2str(chanList(j)),'stim_',num2str(amp),'uA_',num2str(nPulses),'pulse_',num2str(nomFreq),'HZ_nominalFreq_',fNum];
->>>>>>> f140a82eaeb6dbae681f2e28eb5cb90ab6d196f2
+
+
+    t=clock;
+    t(6)=round(t(6));
+    tStr='';
+    for k=1:6
+        tStr=[tStr,num2str(t(k)),'_'];
+    end
+    fName=[folder,prefix,'_chan',num2str(chanList(j)),'stim_A1-',num2str(amp1),'_A2-',num2str(amp2),'_PW1-',num2str(pWidth1),'_PW2-',num2str(pWidth2),'_interpulse',num2str(interpulse),'_',tStr,fNum];
+
     %start recording:
     cbmex('fileconfig',fName,'testing stimulation artifacts',1)
-    pause(.5)
+    pause(15)
     %deliver our stimuli:
     for i=1:nTests
     %    x=stimObj.getSequenceStatus();
@@ -99,6 +110,8 @@ for j=1:numel(chanList)
     %stop recording:
     cbmex('fileconfig',fName,'',0)
     pause(1)%let the file storage app compose itself before we return to the top of the loop
+    impedanceData=stimObj.testElectrodes();
+    save([folder,'impedance', tStr,num2str(j),'.mat'],'impedanceData','-v7.3')
 end
 
 cbmex('close')
