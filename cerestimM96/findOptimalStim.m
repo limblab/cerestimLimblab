@@ -1,7 +1,7 @@
 %Response surface mapping (RSM) search of stimulation waveform space to
 %identify optimal stimulation parameters 
 %% set basic parameters:
-    monkeyName=
+    monkeyName='air'
     baseAmp=50;
     baseWidth=200;
     nPulses=20;
@@ -25,7 +25,7 @@
                 1,1;...
                 1,-1;...
                 -1,1;...
-                -1,-1]*scaleVec;
+                -1,-1].*repmat(scaleVec,[5,1]);
 %% set range of sample points over which to compute artifact error metrics:
     %[start point, end point] in points after stimulation onset
     errRange=[15,30];%15 points @30khz=500us, 30 points =1ms
@@ -45,9 +45,16 @@ end
     cbmex('open')
     fName='temp';
     cbmex('fileconfig',fName,'',1)
-    pause(1)  
+    pause(1) 
+    cbmex('mask',0,0)%set all to disabled
+    for i=1:96
+        cbmex('mask',i,1)
+    end
+    for i=129:144
+        cbmex('mask',i,1)
+    end
     %configur double precision data:
-    cbmex('trialconfig',1,'double')%this sill flush the current data
+    cbmex('trialconfig',1,'double','noevent','continuous',102400)%note, this flushes current data
     
     
     
@@ -59,7 +66,7 @@ end
             disp(['skipping test point:',num2str(i)])
             continue
         end
-        if testPoints(i,1)>=asymLim ||testPoints(i,1)<=-asymlLim
+        if testPoints(i,1)>=asymLim ||testPoints(i,1)<=-asymLim
             warning('findOptimalStim:asymmetryOutsideLimits','the asymmetry for this test point is outside the allowed range')
             disp(['skipping test point:',num2str(i)])
             continue
@@ -93,11 +100,11 @@ end
         %brief pause to ensure stimulator had time to save new params
         pause(.5)
         %flush cerebus cbmex buffer
-        tmp=cbmex('trialdata',1);
+        [~,~]=cbmex('trialdata',1);
         pause(0.1)
         %issue pulse train
         for j=1:nPulses
-            if mod(i,2)
+            if mod(j,2)
                 stimObj.manualStim(testChannel,1);
             else
                 stimObj.manualStim(testChannel,2);
@@ -105,14 +112,14 @@ end
             pause(1/Freq);%wait for the next pulse
         end
         %grab central buffer
-        testData{i}=cbmex('trialdata',1);
+        [testData{i}.ts,testData{i}.cont]=cbmex('trialdata',1);
     end
 %% isolate spikes and compute artifact size metric  
     intrgralErr=zeros(96,errRange(2)-errRange(1));
     slopeErr=zeros(96,errRange(2)-errRange(1));
     for i=1:numel(testData)
         %get the sync data from ainp16:
-        syncData=
+         syncData=testData{i,1}.cont{cellfun(@(x) x==144,testData{i,1}.cont(:,1)),3};
         %find our stim events in the sync data:
         stimOn=find(diff(syncData-mean(syncData)>3)>0.5);
         stimOff=nan(size(stimOn));
@@ -133,38 +140,39 @@ end
         stimOn=stimOn(~isnan(stimOff));
         stimOff=stimOff(~isnan(stimOff));
         
-        %Get arrays of artifact for all channels
-        for j=1:numel(stimOn)
+        %Get arrays of artifact metrics for all channels
+        for j=1:numel(stimOff)
             for k=1:96
                 
                 %error metric1:
                 %integral of absolute artifact magnitude within errRange
                 %error metric2: 
                 %absolute slope of artifact from start to end of errRange
-                [t1,t2]=computeStimErr('put artifact data here',errRange);
+                chMask=cellfun(@(x) x==k,testData{i,1}.cont(:,1));
+                [t1,t2]=stimArtifactMetrics(testData{i,1}.cont{chMask,3}(stimOff:stimOff+errRange(2)),errRange);
                 integralErr(i,k)=integralErr(i,k)+t1;
                 slopeErr(i,k)=slopeErr(i,k)+t2;
             end
         end
     
-
-    
     end
     
 %% get joint error metric for stimulated channel and other channels:
+    stimChMask=cellfun(@(x) x==testChannel,testData{i,1}.cont(:,1));
+    Err=[mean(integralErr(:,~stimChMask))+integralErr(:,stimChMask),mean(slopeErr(:,~stimChMask))+slopeErr(:,stimChMask)];
     
 %% find gradient of planar fit through test points:
 
 %% find local optima along gradient
-    localMinima=
+%     localMinima=
     newErr=localMinima-1;
     while newErr<localMinima
-    
+    end
 %% compute new test points around gradients local optima:
     %get appropriate scale for test-grid using curvature of fit to test
     %points along gradient, and noise of tests
     
-    scaleVec=
+%     scaleVec=
     %assemble list of test points:
     testPoints=[0,0;...
                 1,1;...
@@ -183,13 +191,3 @@ end
 %% identify quadratic optima using the results of the tests
 
 %% functions:
-function [integralErr,slopeErr]=computeStimErr(artifactData,varargin);
-    startPoint=15;
-    endPoint=30;
-    if ~isempty(varargin)
-        startPoint=varargin{1}(1);
-        endPoint=varargin{1}(2);
-    end
-    integralErr=sum(abs(artifactData(startPoint:endPoint)));
-    slopeErr=abs(artifactData(startPoint)-artifactData(endPoint));
-end
