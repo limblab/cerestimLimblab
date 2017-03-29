@@ -4,8 +4,9 @@
 %general setup:
 maxSessionTime=2*60*60;%max lenght of session in seconds
 %configure stim parameters
-electrodeList=[4 5 29 91];
-stimAmps=[15 30];%different amplitudes of stimulation
+electrodeList1=[1,2,9,10];
+electrodeList2=[7,11,44,64];
+stimAmps=[15];%different amplitudes of stimulation
 pulseWidth=200;%time for each phase of a pulse in uS
 freq=200;%frequency of pulses in Hz
 trainLength=0.4;%length of the pulse train in s
@@ -121,6 +122,14 @@ try
             %to a code:
             stimCode=words(idx(1))-stimWord+1;
             disp(['stimulating with code: ',num2str(stimCode)])
+            switch(stimCode)
+                case 1
+                    electrodeList=electrodeList1;
+                case 2
+                    electrodeList=electrodeList2;
+                otherwise
+                    disp('managed to get a bad stimcode, cant assign electrode group')
+            end
             %and re-set the stimStart variable
             stimStart=toc(sessionTimer);
         end
@@ -131,7 +140,7 @@ try
         stimObj.beginSequence;
             stimObj.beginGroup;
             for i=1:numel(electrodeList)
-                stimObj.autoStim(electrodeList(i),stimCode)%stim codes range 0-15, so add 1 to get on matlabs dumb 1 based indexing
+                stimObj.autoStim(electrodeList(i),1)%stim codes range 0-15, so add 1 to get on matlabs dumb 1 based indexing
             end
             stimObj.endGroup;
         stimObj.endSequence;

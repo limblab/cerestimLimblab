@@ -24,7 +24,7 @@ chanList=[35 42 65 70 84 88];
 
 %save params
 folder='C:\data\chips\stimTesting\';
-prefix='Chips_20170131_';
+prefix='Chips_unbalancedStimTesting_';
 
 if ~exist('stimObj','var')
     stimObj=cerestim96;
@@ -100,6 +100,7 @@ for j=1:numel(chanList)
     pause(1)%let the file storage app compose itself before we return to the top of the loop
     impedanceData=stimObj.testElectrodes();
     save([folder,'impedance', tStr,num2str(j),'.mat'],'impedanceData','-v7.3')
+    cbmex('fileconfig',fName,'',0)
 end
 cbmex('close')
 stimObj.disconnect();
