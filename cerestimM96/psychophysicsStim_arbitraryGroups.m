@@ -127,7 +127,8 @@ try
             disp(['stimulating with code: ',num2str(stimCode)])
                 
             if stimCode>numel(electrodeList) || stimCode<1
-                error('managed to get a bad stimcode, cant assign electrode group')
+                warning('managed to get a bad stimcode, cant assign electrode group')
+                continue
             end
             EL=electrodeList{stimCode};
             %and re-set the stimStart variable

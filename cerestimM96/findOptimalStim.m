@@ -44,7 +44,7 @@ end
     %start file storeage app, and start recording:
     cbmex('open')
     fName='temp';
-    cbmex('fileconfig',fName,'',1)
+    cbmex('fileconfig',fName,'',0)
     pause(1) 
     cbmex('mask',0,0)%set all to disabled
     for i=1:96
@@ -55,19 +55,21 @@ end
     end
     %configur double precision data:
     cbmex('trialconfig',1,'double','noevent','continuous',102400)%note, this flushes current data
-    
-    
-    
+
 %% test initial points
     for i=1:size(testPoints,1)
         %set stim parameters
-        if testPoints(i,2)>=imbalLim ||testPoints(i,1)<=-imbalLim
+        if testPoints(i,2)>=imbalLim ||testPoints(i,2)<=-imbalLim
             warning('findOptimalStim:imbalanceOutsideLimits','the imbalance for this test point is outside the allowed range')
+            disp(['selected imbalance: ',num2str(testPoints(i,2))])
+            disp(['imbalance limit: ',num2str(imbalLim)])
             disp(['skipping test point:',num2str(i)])
             continue
         end
         if testPoints(i,1)>=asymLim ||testPoints(i,1)<=-asymLim
             warning('findOptimalStim:asymmetryOutsideLimits','the asymmetry for this test point is outside the allowed range')
+            disp(['selected asymmetry: ',num2str(testPoints(i,1))])
+            disp(['asymmetry limit: ',num2str(asymLim)])
             disp(['skipping test point:',num2str(i)])
             continue
         end
@@ -115,29 +117,29 @@ end
         [testData{i}.ts,testData{i}.cont]=cbmex('trialdata',1);
     end
 %% isolate spikes and compute artifact size metric  
-    intrgralErr=zeros(96,errRange(2)-errRange(1));
-    slopeErr=zeros(96,errRange(2)-errRange(1));
+    integralErr=zeros(96,numel(testData));
+    slopeErr=zeros(96,numel(testData));
     for i=1:numel(testData)
         %get the sync data from ainp16:
-         syncData=testData{i,1}.cont{cellfun(@(x) x==144,testData{i,1}.cont(:,1)),3};
+         syncData=testData{1,i}.cont{cellfun(@(x) x==144,testData{1,i}.cont(:,1)),3}/2500;
         %find our stim events in the sync data:
-        stimOn=find(diff(syncData-mean(syncData)>3)>0.5);
+        stimOn=find(diff((syncData-mean(syncData))>3)>0.5);
         stimOff=nan(size(stimOn));
-        tmpStimOff=find(diff(syncData-mean(syncData)>-3)>0.5);
+        tmpStimOff=find((diff(syncData-mean(syncData))<-3)>0.5);
         for j=1:numel(stimOn)
             if j<numel(stimOn)
                 windowEnd=stimOn(j+1);
             else
                 windowEnd=numel(syncData);
             end
-            offIdx=stimOff(find((stimOff>stimOn(j)& stimOff<windowEnd),1,'first'));
+            offIdx=find((tmpStimOff>stimOn(j)& tmpStimOff<windowEnd),1,'first');
             if ~isempty(offIdx)
-                stimOff(j)=offIdx;
+                stimOff(j)=tmpStimOff(offIdx);
             end
         end
 
         %remove partial trials
-        stimOn=stimOn(~isnan(stimOff));
+        stimOn=stimOn(~isnan(stimOn));
         stimOff=stimOff(~isnan(stimOff));
         
         %Get arrays of artifact metrics for all channels
@@ -148,21 +150,30 @@ end
                 %integral of absolute artifact magnitude within errRange
                 %error metric2: 
                 %absolute slope of artifact from start to end of errRange
-                chMask=cellfun(@(x) x==k,testData{i,1}.cont(:,1));
-                [t1,t2]=stimArtifactMetrics(testData{i,1}.cont{chMask,3}(stimOff:stimOff+errRange(2)),errRange);
-                integralErr(i,k)=integralErr(i,k)+t1;
-                slopeErr(i,k)=slopeErr(i,k)+t2;
+                chMask=cellfun(@(x) x==k,testData{1,i}.cont(:,1));
+                [t1,t2]=stimArtifactMetrics(testData{1,i}.cont{chMask,3}(stimOff:stimOff+errRange(2)),errRange);
+                integralErr(k,i)=integralErr(k,i)+t1;
+                slopeErr(k,i)=slopeErr(k,i)+t2;
             end
         end
-    
     end
     
 %% get joint error metric for stimulated channel and other channels:
-    stimChMask=cellfun(@(x) x==testChannel,testData{i,1}.cont(:,1));
-    Err=[mean(integralErr(:,~stimChMask))+integralErr(:,stimChMask),mean(slopeErr(:,~stimChMask))+slopeErr(:,stimChMask)];
+    neuralMask=cellfun(@(x) x<=96,testData{1,1}.cont(:,1));
+    stimChMask=cellfun(@(x) x==testChannel,testData{1,1}.cont(neuralMask,1));
+    Err=[mean(integralErr(~stimChMask,:))+integralErr(stimChMask,:)/10;mean(slopeErr(~stimChMask,:))+slopeErr(stimChMask,:)];
     
 %% find gradient of planar fit through test points:
-
+    fitAsym=polyfit(testPoints(:,1),Err(1,:)',1);
+    fitImbal=polyfit(testPoints(:,2),Err(1,:)',1);
+    
+    vMax=[fitAsym(1),fitImbal(1)];
+    vMax=vMax/sqrt(vMax*vMax');%vector in the direction of the max gradient
+    %get appropriate step size using curvature:
+    fitAsym=polyfit(testPoints(:,1),Err(1,:)',2);
+    fitImbal=polyfit(testPoints(:,2),Err(1,:)',2);
+    curveWeight=max(fitAsym(1),fitImbal(1));
+    
 %% find local optima along gradient
 %     localMinima=
     newErr=localMinima-1;
