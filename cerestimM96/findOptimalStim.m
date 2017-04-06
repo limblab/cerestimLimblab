@@ -33,7 +33,7 @@
                 0,sqrt(2);...
                 -sqrt(2),0;...
                 0,-sqrt(2)];
-    testPattern=basePattern.*repmat(scaleVec,[9,1]);
+    testPattern=basePattern.*repmat(scaleVec,[size(basePattern,1),1]);
     currTestPoints=testPattern;        
 %% set range of sample points over which to compute artifact error metrics:
     %[start point, end point] in points after stimulation onset
@@ -56,11 +56,18 @@ end
     cbmex('fileconfig',fName,'',0)
     pause(1) 
     cbmex('mask',0,0)%set all to disabled
+    %set 30k sampling on neural channels
     for i=1:96
+        cbmex('config',i,'smpgroup',5)
+        cbmex('config',i,'smpfilter',0)%ensure no filter
         cbmex('mask',i,1)
     end
-    for i=129:144
-        cbmex('mask',i,1)
+    %turn on sampling for extra analog input lines:
+    ainputLines=[144];
+    for i=1:numel(ainputLines)
+        cbmex('config',i,'smpgroup',5)
+        cbmex('config',i,'smpfilter',0)%ensure no filter
+        cbmex('mask',ainputLines(i),1)
     end
     %configur double precision data:
     cbmex('trialconfig',1,'double','noevent','continuous',102400)%note, this flushes current data
@@ -176,31 +183,13 @@ end
         stimChMask=cellfun(@(x) x==testChannel,testData{1,1}.cont(neuralMask,1));
         Err=[mean(integralErr(~stimChMask,:))+integralErr(stimChMask,:)/10;mean(slopeErr(~stimChMask,:))+slopeErr(stimChMask,:)];
 
-    %% find gradient of planar fit through test points:
-%         fitAsym=polyfit(testPoints(:,1),Err(1,:)',1);
-%         fitImbal=polyfit(testPoints(:,2),Err(1,:)',1);
-
-%         vMax=[fitAsym(1),fitImbal(1)];
-%         vMax=vMax/sqrt(vMax*vMax');%vector in the direction of the max gradient
-%         %try to get appropriate step size using curvature:
-%         fitAsym=polyfit(currTestPoints(:,1),Err(1,:)',2);
-%         fitImbal=polyfit(currTestPoints(:,2),Err(1,:)',2);
-%         d1= -(fitAsym(2)/(2*fitAsym(1)))
-%         d2= -(fitImbal(2)/(2*fitImbal(1)))
-%         %convert to desired step sizes: 
-%         numSteps=10;
-%         d1=d1/numSteps;
-%         d2=d2/numSteps;
-%         %convert to steps along vMax:
-%         incrAsym=d1/vMax(1);
-%         incrImbal=d2/vMax(2);
-%         incr=min(incrAsym,incrImbal);
     %% find 2nd order response surface through the tested points
         fitAsym=polyfit(currTestPoints(:,1),Err(1,:)',2);
         fitImbal=polyfit(currTestPoints(:,2),Err(1,:)',2);
         rFunc=@(C,x) C(1)*x(:,1).^2 + C(2)*x(:,2).^2 + C(3)*x(:,1).*x(:,2) + C(4)*x(:,1) + C(5)*x(:,2) + C(6);
         C0=[fitAsym(1),fitImbal(1),0,fitAsym(2),fitImbal(2),(fitAsym(3)+fitImbal(3))/2];
         coeffs=lsqcurvefit(rFunc,C0,currTestPoints,Err(1,:)');
+        
     %% find minima of the response function:
         A=coeffs(1);B=coeffs(2);C=coeffs(3);D=coeffs(4);E=coeffs(5);
         asymMin=(C*E-2*B*D)/(4*A*B-C*C);
@@ -221,9 +210,20 @@ end
                 disp(['minimum asym slope: ',num2str(min(dAsym))])
                 disp(['minimum imbal slope: ',num2str(min(dImbal))])
                 disp('getting a tighter window and re-testing')
+                
+%                 asymRange=[min(currTestPoints(:,1)),max(currTestPoints(:,1))];
+%                 imbalRange=[min(currTestPoints(:,2)),max(currTestPoints(:,2))];
+%                 asymVec=asymRange(1):diff(asymRange)/10:asymRange(2);
+%                 imbalVec=imbalRange(1):diff(imbalRange)/10:imbalRange(2);
+%                 [asymMesh,imbalMesh]=meshgrid(asymVec,imbalVec);
+% 
+%                 errMesh=reshape(rFunc(coeffs,[asymMesh(:)',imbalMesh(:)']),size(asymMesh));
+%                 figure; surf(asymMesh,imbalMesh,errMesh)
+                
+                
                 %get a tighter test pattern around the anticipated optima
                 scaleVec=scaleVec*0.5;
-                testPattern=basePattern.*repmat(scaleVec,[9,1]);
+                testPattern=basePattern.*repmat(scaleVec,[size(basePattern,1),1]);
                 currTestPoints=testPattern+repmat([asymMin,imbalMin],[size(testPattern,1),1]);
             else %our local surface is pretty smooth, so we can trust the estiamted minima
                 break
