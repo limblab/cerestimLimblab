@@ -4,12 +4,11 @@ clear all
 %general setup:
 maxSessionTime=2*60*60;%max lenght of session in seconds
 %configure stim parameters
-electrodeList{1}=[1,2,9,10];
+electrodeList{1}=[1,9,10];
 electrodeList{2}=[1];
-electrodeList{3}=[2];
-electrodeList{4}=[9];
-electrodeList{5}=[10];
-stimAmps=[20];%different amplitudes of stimulation
+electrodeList{3}=[9];
+electrodeList{4}=[10];
+stimAmps=[30];%different amplitudes of stimulation
 pulseWidth=200;%time for each phase of a pulse in uS
 freq=200;%frequency of pulses in Hz
 trainLength=0.4;%length of the pulse train in s

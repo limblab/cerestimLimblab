@@ -31,8 +31,8 @@
                 -1,-1;
                 sqrt(2),0;...
                 0,sqrt(2);...
-                sqrt(2),0;...
-                0,sqrt(2)];
+                -sqrt(2),0;...
+                0,-sqrt(2)];
     testPattern=basePattern.*repmat(scaleVec,[9,1]);
     currTestPoints=testPattern;        
 %% set range of sample points over which to compute artifact error metrics:
@@ -67,6 +67,7 @@ end
 %% run tests
     converged=false;
     testPoints=[];
+    loopCount=0;
     while ~converged
 %% hit current set of test points
         for i=1:size(currTestPoints,1)
@@ -119,9 +120,9 @@ end
             %issue pulse train
             for j=1:nPulses
                 if mod(j,2)
-                    stimObj.manualStim(testChannel,1);
+                    evalc('stimObj.manualStim(testChannel,1)');
                 else
-                    stimObj.manualStim(testChannel,2);
+                    evalc('stimObj.manualStim(testChannel,2)');
                 end
                 pause(1/Freq);%wait for the next pulse
             end
@@ -197,23 +198,29 @@ end
     %% find 2nd order response surface through the tested points
         fitAsym=polyfit(currTestPoints(:,1),Err(1,:)',2);
         fitImbal=polyfit(currTestPoints(:,2),Err(1,:)',2);
-        rFunc=@(C,x) C(1)*x(1)^2 + C(2)*x(2)^2 + C(3)*x(1)*x(2) + C(4)*x(1) + C(5)*x(2) + C(6);
+        rFunc=@(C,x) C(1)*x(:,1).^2 + C(2)*x(:,2).^2 + C(3)*x(:,1).*x(:,2) + C(4)*x(:,1) + C(5)*x(:,2) + C(6);
         C0=[fitAsym(1),fitImbal(1),0,fitAsym(2),fitImbal(2),(fitAsym(3)+fitImbal(3))/2];
         coeffs=lsqcurvefit(rFunc,C0,currTestPoints,Err(1,:)');
     %% find minima of the response function:
         A=coeffs(1);B=coeffs(2);C=coeffs(3);D=coeffs(4);E=coeffs(5);
         asymMin=(C*E-2*B*D)/(4*A*B-C*C);
         imbalMin=(C*D-2*A*E)/(4*A*B-C*C);
-        
-        if asymMin<min(currTestPoints(:,1)) || asymMin>max(currTestPoints(:,1)) || imbalMin<min(currTestPoints(:,2)) || imbalMin>max(currTestPoints(:,2))
+        disp('estimated minima:')
+        disp(['asym minima: ',num2str(asymMin), '   test range: ',num2str(min(currTestPoints(:,1))),' to: ',num2str(max(currTestPoints(:,1)))]);
+        disp(['imbal minima: ',num2str(imbalMin),'   test range: ',num2str(min(currTestPoints(:,2))),' to: ',num2str(max(currTestPoints(:,2)))]);
+        if asymMin<max(currTestPoints(:,1)) || asymMin>min(currTestPoints(:,1)) || imbalMin<max(currTestPoints(:,2)) || imbalMin>min(currTestPoints(:,2))
             %minima is inside our test pattern
-            
+            disp('error minima is within the test window')
             %check that the gradients are small around our test pattern
             %this is a necessary criteria of using a quadratic function as
             %a local approximator for an arbitrary response surface:
-            dAsym=2*A*currTestPoints(:,1)+C*currTestpoints(:,2)+D;
+            dAsym=2*A*currTestPoints(:,1)+C*currTestPoints(:,2)+D;
             dImbal=2*B*currTestPoints(:,2)+C*currTestPoints(:,1)+E;
-            if abs(dAsym)>1 || abs(dImbal)>1
+            if min(abs(dAsym))>1 || min(abs(dImbal))>1
+                disp('local curvature is high')
+                disp(['minimum asym slope: ',num2str(min(dAsym))])
+                disp(['minimum imbal slope: ',num2str(min(dImbal))])
+                disp('getting a tighter window and re-testing')
                 %get a tighter test pattern around the anticipated optima
                 scaleVec=scaleVec*0.5;
                 testPattern=basePattern.*repmat(scaleVec,[9,1]);
@@ -230,6 +237,7 @@ end
         if loopCount>iterLimit
             warning('did not find optimal stim parameters before exceeding iteration limit')
             disp(['tried ',num2str(loopCount),' test patterns without finding a local minima in the artifact'])
+            break
         end
     end
 
