@@ -20,8 +20,8 @@
     iterLimit=10;
 %% define asymmetry unit of interest (UOI) and imbalance UOI
     %used to build the pattern of test points
-    asymUOI=15;
-    imbalUOI=4;
+    asymUOI=30;
+    imbalUOI=8;
     scaleVec=[asymUOI,imbalUOI];
 %% set initial test set
     basePattern=[0,0;...
@@ -33,6 +33,7 @@
                 0,sqrt(2);...
                 -sqrt(2),0;...
                 0,-sqrt(2)];
+            basePattern=[basePattern;basePattern*.5];
     testPattern=basePattern.*repmat(scaleVec,[size(basePattern,1),1]);
     currTestPoints=testPattern;        
 %% set range of sample points over which to compute artifact error metrics:
@@ -58,6 +59,7 @@ end
     cbmex('mask',0,0)%set all to disabled
     %set 30k sampling on neural channels
     for i=1:96
+        disp(['setting sample rate on channel ',num2str(i)])
         cbmex('config',i,'smpgroup',5)
         cbmex('config',i,'smpfilter',0)%ensure no filter
         cbmex('mask',i,1)
@@ -65,11 +67,13 @@ end
     %turn on sampling for extra analog input lines:
     ainputLines=[144];
     for i=1:numel(ainputLines)
+        disp(['setting sample rate on channel ',num2str(i)])
+        pause(1)%without the pause none of the channel settings are changed
         cbmex('config',i,'smpgroup',5)
         cbmex('config',i,'smpfilter',0)%ensure no filter
         cbmex('mask',ainputLines(i),1)
     end
-    %configur double precision data:
+    %configure double precision data:
     cbmex('trialconfig',1,'double','noevent','continuous',102400)%note, this flushes current data
 %% run tests
     converged=false;
@@ -125,6 +129,7 @@ end
             [~,~]=cbmex('trialdata',1);
             pause(0.1)
             %issue pulse train
+            disp('stimulating')
             for j=1:nPulses
                 if mod(j,2)
                     evalc('stimObj.manualStim(testChannel,1)');
@@ -211,14 +216,14 @@ end
                 disp(['minimum imbal slope: ',num2str(min(dImbal))])
                 disp('getting a tighter window and re-testing')
                 
-%                 asymRange=[min(currTestPoints(:,1)),max(currTestPoints(:,1))];
-%                 imbalRange=[min(currTestPoints(:,2)),max(currTestPoints(:,2))];
-%                 asymVec=asymRange(1):diff(asymRange)/10:asymRange(2);
-%                 imbalVec=imbalRange(1):diff(imbalRange)/10:imbalRange(2);
-%                 [asymMesh,imbalMesh]=meshgrid(asymVec,imbalVec);
-% 
-%                 errMesh=reshape(rFunc(coeffs,[asymMesh(:)',imbalMesh(:)']),size(asymMesh));
-%                 figure; surf(asymMesh,imbalMesh,errMesh)
+                asymRange=[min(currTestPoints(:,1)),max(currTestPoints(:,1))];
+                imbalRange=[min(currTestPoints(:,2)),max(currTestPoints(:,2))];
+                asymVec=asymRange(1):diff(asymRange)/10:asymRange(2);
+                imbalVec=imbalRange(1):diff(imbalRange)/10:imbalRange(2);
+                [asymMesh,imbalMesh]=meshgrid(asymVec,imbalVec);
+                errVec=rFunc(coeffs,[asymMesh(:),imbalMesh(:)]);
+                errMesh=reshape(errVec,size(asymMesh));
+                figure; surf(asymMesh,imbalMesh,errMesh)
                 
                 
                 %get a tighter test pattern around the anticipated optima
@@ -240,4 +245,7 @@ end
             break
         end
     end
-
+cbmex('close')
+stimObj.disconnect();
+stimObj.delete()
+clear stimObj
