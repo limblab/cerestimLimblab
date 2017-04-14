@@ -2,21 +2,21 @@
 
 %save parameters:
 folder='E:\TestData\stimArtifact\';
-filePrefix='Chips_20161025_';
+filePrefix='Mihili_HighHeadrange_';
 %configure params
 
 %configure stim params
-amp=20;%in uA
+amp=50;%in uA
 pWidth=200;%in us
-% amp1=50;%in uA
-% pWidth1=200;%in us
-% amp2=50;%in uA
-% pWidth2=200;%in us
+amp1=50;%in uA
+pWidth1=200;%in us
+amp2=50;%in uA
+pWidth2=200;%in us
 interphase=53;
 % interpulse=100;
 % interpulse=150;
  interpulse=200;
-% interpulse=250;
+interpulse=250;
 % interpulse=300;
 % interpulse=350;
 % interpulse=400;
@@ -27,11 +27,11 @@ freq=floor(1/((pWidth1+pWidth2+interphase+interpulse)*10^-6));%hz
 nPulses=1;
 nomFreq=10;
 nTests=100;
-chanList=[35 42 65 70 84 88];
+chanList=[1:3:96];
 
 %save params
-folder='C:\data\chips\stimTesting\';
-prefix='Chips_unbalancedStimTesting_';
+folder='C:\data\Mihili\stimTesting\';
+prefix='Mihili_HighHeadroom_';
 
 if ~exist('stimObj','var')
     stimObj=cerestim96;
