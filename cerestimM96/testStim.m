@@ -1,8 +1,5 @@
 %test cerestim96 recording during stim:
 
-%save parameters:
-folder='E:\TestData\stimArtifact\';
-filePrefix='Mihili_HighHeadrange_';
 %configure params
 
 %configure stim params
@@ -27,11 +24,11 @@ freq=floor(1/((pWidth1+pWidth2+interphase+interpulse)*10^-6));%hz
 nPulses=1;
 nomFreq=10;
 nTests=100;
-chanList=[1:3:96];
+chanList=[1:4:96];
 
 %save params
 folder='C:\data\Mihili\stimTesting\';
-prefix='Mihili_HighHeadroom_';
+prefix='Mihili_lowGain_';
 
 if ~exist('stimObj','var')
     stimObj=cerestim96;

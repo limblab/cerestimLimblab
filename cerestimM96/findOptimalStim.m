@@ -20,8 +20,8 @@
     iterLimit=10;
 %% define asymmetry unit of interest (UOI) and imbalance UOI
     %used to build the pattern of test points
-    asymUOI=30;
-    imbalUOI=8;
+    asymUOI=20;
+    imbalUOI=5;
     scaleVec=[asymUOI,imbalUOI];
 %% set initial test set
     basePattern=[0,0;...
@@ -197,12 +197,12 @@ end
         
     %% find minima of the response function:
         A=coeffs(1);B=coeffs(2);C=coeffs(3);D=coeffs(4);E=coeffs(5);
-        asymMin=(C*E-2*B*D)/(4*A*B-C*C);
+        asymMin=(C*E-2*B*D)/(4*A*B-C*C); %this actually finds the extrema, min or max
         imbalMin=(C*D-2*A*E)/(4*A*B-C*C);
         disp('estimated minima:')
         disp(['asym minima: ',num2str(asymMin), '   test range: ',num2str(min(currTestPoints(:,1))),' to: ',num2str(max(currTestPoints(:,1)))]);
         disp(['imbal minima: ',num2str(imbalMin),'   test range: ',num2str(min(currTestPoints(:,2))),' to: ',num2str(max(currTestPoints(:,2)))]);
-        if asymMin<max(currTestPoints(:,1)) || asymMin>min(currTestPoints(:,1)) || imbalMin<max(currTestPoints(:,2)) || imbalMin>min(currTestPoints(:,2))
+        if ((asymMin<max(currTestPoints(:,1)) || asymMin>min(currTestPoints(:,1))) && A>=0) || ((imbalMin<max(currTestPoints(:,2)) || imbalMin>min(currTestPoints(:,2))) && B>=0)
             %minima is inside our test pattern
             disp('error minima is within the test window')
             %check that the gradients are small around our test pattern
@@ -235,6 +235,18 @@ end
             end
             
         else
+            if A<0
+                %we have a maxima, and need to pick a testpoint further
+                %away. Default to reducing the asymmetry
+                
+                asymMin=-1*sign(asymMin)*scaleVec(1)*2+asymMin;
+            end
+            if B<0
+                %we have a maxima, and need to pick a testpoint further
+                %away. Default to reducing the imbalance
+                
+                asymMin=-1*sign(imbalMin)*scaleVec(2)*2+imbalMin;
+            end
             %% compute new test points around projected minima:
             currTestPoints=testPattern+repmat([asymMin,imbalMin],[size(testPattern,1),1]);
         end
