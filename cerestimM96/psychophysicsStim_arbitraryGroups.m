@@ -4,17 +4,17 @@ clear all
 %general setup:
 maxSessionTime=2*60*60;%max lenght of session in seconds
 %configure stim parameters
-electrodeList{1}=[4,25,85,96];
-electrodeList{2}=[4];
-electrodeList{3}=[25];
-electrodeList{4}=[85];
-electrodeList{5}=[96];
+electrodeList{1}=[42];
+% electrodeList{2}=[1];
+% electrodeList{3}=[2];
+% electrodeList{4}=[22];
+% electrodeList{5}=[62];
 stimAmps=[30];%different amplitudes of stimulation
 pulseWidth=200;%time for each phase of a pulse in uS
-freq=200;%frequency of pulses in Hz
-trainLength=0.4;%length of the pulse train in s
+freq=100;%200;%frequency of pulses in Hz
+trainLength=0.1;%length of the pulse train in s
 numPulses=freq*trainLength;
-stimDelay=0.115;%delays start of stim train to coincide with middle of force rise
+stimDelay=0.200;%0.115;%delays start of stim train to coincide with middle of force rise
 % configure cbmex parameters:
 stimWord=hex2dec('60');
 DBMask=hex2dec('f0');
@@ -97,6 +97,9 @@ try
             if ~isempty(word_indices_remove)
                 word_indices_keep = setxor(word_indices_remove,1:length(words));
                 words = words(word_indices_keep);
+            end
+            if ~isempty(words)
+                unique(words,'stable')
             end
 %             %debug:
 %             if ~isempty(words)

@@ -2,7 +2,7 @@
 clear all
 %script setup- 
 %general setup:
-maxSessionTime=2*60*60;%max lenght of session in seconds
+maxSessionTime=2*90*60;%max length of session in seconds -- doesn't do anything btw
 stimWord=hex2dec('60');
 DBMask=hex2dec('f0');
 maxWait=400;%maximum interval to wait before exiting
@@ -11,22 +11,23 @@ chan=151;%digital input is CH151
 
 
 %configure stim parameters
-electrodeList{1}=[42];
+electrodeList{1}=[22];
+electrodeList{2}=[36];
 stimFreq=100;%200;%frequency of pulses in Hz
 
-stimDelay=0.200;%0.115;%delays start of stim train to coincide with middle of force rise
+stimDelay=0.215;%0.115;%delays start of stim train to coincide with middle of force rise
 
 pWidth=200;%in us
-amp1=30;%in uA
+amp1=40;%in uA
 pWidth1=200;%in us
-amp2=30;%in uA
+amp2=40;%in uA
 pWidth2=200;%in us
 interphase=53;
 interpulse=250;
 %
 interpulseDefFreq=floor(1/((pWidth1+pWidth2+interphase+interpulse)*10^-6));%hz
-nPulses=1;
-nTests=10;
+nPulses=10;
+nTests=1;
 trainLength=nTests/stimFreq;%length of the pulse train in s
 
 
@@ -69,7 +70,7 @@ try
                         'width1',pWidth1,...
                         'width2',pWidth2,...
                         'interphase',interphase,...
-                        'frequency',interpulseDefFreq);
+                        'frequency',stimFreq);
     stimObj.setStimPattern('waveform',2,...
                         'polarity',1,...
                         'pulses',nPulses,...
@@ -78,7 +79,7 @@ try
                         'width1',pWidth1,...
                         'width2',pWidth2,...
                         'interphase',interphase,...
-                        'frequency',interpulseDefFreq);   
+                        'frequency',stimFreq);   
                     
     h=msgbox('Central Connection is open: stimulation is running','CBmex-notifier');
     btnh=findobj(h,'style','pushbutton');
@@ -101,7 +102,6 @@ try
             end
             continue
         else%if we found some data:
-        
             %parse raw word data from the digital channel:
             %convert word into single byte that contains the limblab state info
             words=bitshift(bitand(hex2dec('FF00'),data{chan,3}),-8);
@@ -114,9 +114,9 @@ try
                 words = words(word_indices_keep);
             end
             if ~isempty(words)
-                unique(words,'stable')
+%                 unique(words,'stable')
             end
-%             %debug:
+            %debug:
 %             if ~isempty(words)
 %                 for i=1:numel(words)
 %                     if words(i)<200
@@ -142,7 +142,7 @@ try
             %if we got to this point we have a valid stim word; convert it
             %to a code:
             stimCode=words(idx(1))-stimWord+1;
-            disp(['stimulating with code: ',num2str(stimCode)])
+%             disp(['stimulating with code: ',num2str(stimCode)])
                 
             if stimCode>numel(electrodeList) || stimCode<1
                 warning('managed to get a bad stimcode, cant assign electrode group')
@@ -156,15 +156,14 @@ try
         %stim command:
         pause(stimDelay)%wait to align stim start with middle of force rise
             %construct stim sequence based on word
-        
         for pul = 1:nTests
-            if mod(pul,2)
-                stimObj.manualStim(EL,1);
-            else
-                stimObj.manualStim(EL,2);
-            end
+%             if mod(pul,2)
+            stimObj.manualStim(EL,1);
+%             else
+%                 stimObj.manualStim(EL,2);
+%             end
             pause(1/stimFreq);
-        end
+        end        
         if ~isempty(pollInterval)
             pause(pollInterval)
         end

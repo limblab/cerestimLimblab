@@ -1,18 +1,19 @@
 %test cerestim96 recording during stim:
 
-%configure stim params
-amp=10;%in uA
-pWidth=200;%in us
-interphase=53;
-interpulse=53;
-freq=floor(1/((2*pWidth+interphase+interpulse)*10^-6));%hz
-nPulses=1;
-nomFreq=10;
-nTests=100;
-chanList=[18,29,52,65,89];
-
-%save params
-prefix='D:\Data\Chips\STIMRECORD\Chips_20161102_CObump_flipPolarity_CS96unmodAmp_5chanStim_';
+% %configure stim params
+% amp=10;%in uA
+% pWidth=200;%in us
+% interphase=53;
+% interpulse=53;
+% freq=floor(1/((2*pWidth+interphase+interpulse)*10^-6));%hz
+% nPulses=1;
+% nomFreq=10;
+% nTests=100;
+% chanList=[18,29,52,65,89];
+% 
+% %save params
+% prefix='C:\data\Han\Han_20170711_multiElec_CObump_5chanStim-18_29_52_65_89\';
+% % prefix='D:\Data\Chips\STIMRECORD\Chips_20161102_CObump_flipPolarity_CS96unmodAmp_5chanStim_';
 
 if ~exist('stimObj','var')
     stimObj=cerestim96;
