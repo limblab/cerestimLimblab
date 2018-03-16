@@ -22,7 +22,7 @@ interphase=53;
 freq=floor(1/((pWidth1+pWidth2+interphase+interpulse)*10^-6));%hz
 nPulses=1;
 nomFreq=10;
-nTests=20;
+nTests=100;
 %     chanList=[3,5];
 
 %save params
@@ -105,7 +105,7 @@ for j=1:numel(chanList)
     if ctr==10
        warning('tried to start recording and failed') 
     end
-    pause(10)
+    pause(2)
     %deliver our stimuli:
     for i=1:nTests
     %    x=stimObj.getSequenceStatus();
