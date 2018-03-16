@@ -1,4 +1,8 @@
 %test cerestim96 recording during stim:
+%testStim configures the stimulator with a pair of waveforms, one cathodal
+%leading, the other anodal leading. testStim then initiates cerebus
+%recording, followed by issuing alternating cathodal and anodal stimuli
+%
 %test stim is intended to be called within a wrapper script that configures
 %the stim parameters. The wrapping script must set the following
 %parameters:
@@ -7,18 +11,19 @@
 %pWidth1        :   width of first pulse phase
 %pWidth2        :   width of second pulse phase
 %interpulse     :   time between pulses
+%interphase     :   interphase time of the waveform. This is also the time
+%                       the sync line is high after the last pulse
+%nPulses        :   pulses per waveform
 %chanList       :   a vector of channel numbers that will be sequentially
 %                       stimulated
 %folder         :   name of the folder where data should be saved
 %prefix         :   a string that will be appended to the front of every
 %                       file name
-
+%nomFreq        :   frequency that matlab will attempt to stimulate at
+%nTests         :   number of times the script will issue a cathodal/anodal
+%                       stim pair
 %configure params
-interphase=53;
 freq=floor(1/((pWidth1+pWidth2+interphase+interpulse)*10^-6));%hz
-nPulses=1;
-nomFreq=10;
-nTests=20;
 
 if ~exist('stimObj','var')
     stimObj=cerestim96;
