@@ -79,33 +79,8 @@ pause(1)
 %loop through channels and log a test file for each one:
 for j=1:numel(chanList)
     disp(['working on chan: ',num2str(chanList(j))])
-    fNum=num2str(j,'%03d');
-
-    t=clock;
-    t(6)=round(t(6));
-    tStr='';
-    for k=1:6
-        tStr=[tStr,num2str(t(k)),'_'];
-    end
-    fName=[folder,prefix,'_chan',num2str(chanList(j)),'stim_A1-',num2str(amp1),'_A2-',num2str(amp2),'_PW1-',num2str(pWidth1),'_PW2-',num2str(pWidth2),'_interpulse',num2str(interpulse),'_',tStr,fNum];
-
-    [~,fstr,ext]=fileparts(fName);
-    %start recording:
-
-    ctr=0;
-    tmp=dir(folder);
-    while isempty(cell2mat(strfind({tmp.name},fstr))) & ctr<10
-        cbmex('fileconfig',fName,'',0)
-        pause(.5);
-        cbmex('fileconfig',fName,'testing stimulation artifacts',1);
-        pause(1);
-        ctr=ctr+1;
-        tmp=dir(folder);
-    end
-    if ctr==10
-       warning('tried to start recording and failed') 
-    end
-    pause(10)
+    startcerebusStimRecording(chanList(j),amp1,amp2,pWidth1,pWidth2,interpulse,j);
+    
     %deliver our stimuli:
     for i=1:nTests
     %    x=stimObj.getSequenceStatus();
