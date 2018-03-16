@@ -44,43 +44,17 @@ stimObj.setStimPattern('waveform',1,...
                         'interphase',interphase,...
                         'frequency',freq); 
 %build sequence of 2 pulses on all of the listed channels:
-stimObj.beginSequence()
-%     stimObj.groupStimulus(1,0,1,numel(chanList),chanList,ones(size(chanList)))
-%     stimObj.groupStimulus(0,0,1,numel(chanList),chanList,2*ones(size(chanList)))
-    stimObj.beginGroup()
-        for k=1:numel(chanList)
-            stimObj.autoStim(chanList(k),1)
-        end
-    stimObj.endGroup()
-    stimObj.wait(100)
-    stimObj.beginGroup()
-        for k=1:numel(chanList)
-            stimObj.autoStim(chanList(k),2)
-        end
-    stimObj.endGroup()
-stimObj.endSequence()
-%establish cerebus connection
-cbmex('open')
-%start file storeage app, or stop recording if already started
-fName='temp';
-cbmex('fileconfig',fName,'',0)
-pause(1)
+buildStimSequence(stimObj,chanList,[1 2],100);
 
-    disp(['stimulating'])
-    fNum=num2str(1,'%03d');
-    fName=[prefix,'_',num2str(amp),'uA-stim_',num2str(nPulses),'pulse_',num2str(nomFreq),'HZ_nominalFreq_',fNum];
-    %start recording:
-    cbmex('fileconfig',fName,'testing stimulation artifacts',1)
-    pause(.5)
-    %deliver our stimuli:
-    for i=1:2:nTests
-    %    x=stimObj.getSequenceStatus();
-        stimObj.play(1)%plays the scripted sequence of stimuli
-        pause(2/nomFreq+rand/20);%wait a bit to get different timings relative to cerebus clock
-    end
-    pause(.5)
-    %stop recording:
-    cbmex('fileconfig',fName,'',0)
+%establish cerebus connection
+initializeCerebus();
+
+disp(['stimulating'])
+%deliver our stimuli:
+stimObj.play(nTests)%plays the scripted sequence of stimuli
+pause(.5)
+%stop recording:
+cbmex('fileconfig',fName,'',0)
 
 cbmex('close')
 stimObj.disconnect();

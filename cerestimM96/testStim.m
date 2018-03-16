@@ -1,33 +1,24 @@
 %test cerestim96 recording during stim:
+%test stim is intended to be called within a wrapper script that configures
+%the stim parameters. The wrapping script must set the following
+%parameters:
+%amp1           :   amplitude of first pulse phase
+%amp2           :   amplitude of second pulse phase
+%pWidth1        :   width of first pulse phase
+%pWidth2        :   width of second pulse phase
+%interpulse     :   time between pulses
+%chanList       :   a vector of channel numbers that will be sequentially
+%                       stimulated
+%folder         :   name of the folder where data should be saved
+%prefix         :   a string that will be appended to the front of every
+%                       file name
 
 %configure params
-%     pWidth=200;%in us
-%     amp1=40;%in uA
-%     pWidth1=200;%in us
-%     amp2=amp1;%in uA
-%     pWidth2=200;%in us
 interphase=53;
-% %     % % 
-% %     % interpulse=53;
-% %     % interpulse=100;
-% %     % interpulse=150;
-% %     interpulse=200;
-%     interpulse=250;
-%     % interpulse=300;
-% interpulse=350;
-% interpulse=400;
-% interpulse=450;
-% interpulse=500;
-%
 freq=floor(1/((pWidth1+pWidth2+interphase+interpulse)*10^-6));%hz
 nPulses=1;
 nomFreq=10;
 nTests=20;
-%     chanList=[3,5];
-
-%save params
-%     folder='C:\data\stimTesting\ArtificialMonkey_20171214\';
-%     prefix='ArtificialMonkey_20171214_testBatteries';
 
 if ~exist('stimObj','var')
     stimObj=cerestim96;
@@ -58,48 +49,18 @@ stimObj.setStimPattern('waveform',1,...
                         'interphase',interphase,...
                         'frequency',freq);   
 
-%test and save impedance:
-t=clock;
-    t(6)=round(t(6));
-    tStr='';
-    for k=1:6
-        tStr=[tStr,num2str(t(k)),'_'];
-    end
-    
-    
-% impedanceData=stimObj.testElectrodes();
-% save([folder,'impedance0',tStr,'.mat'],'impedanceData','-v7.3')
-
 %establish cerebus connection
-cbmex('open')
-%start file storeage app, or stop recording if already started
-fName='temp';
-cbmex('fileconfig',fName,'',0)
-pause(1)
+initializeCerebus();
 %loop through channels and log a test file for each one:
 for j=1:numel(chanList)
     disp(['working on chan: ',num2str(chanList(j))])
     startcerebusStimRecording(chanList(j),amp1,amp2,pWidth1,pWidth2,interpulse,j);
-    
+    buildStimSequence(stimObj,chanList(j),[1 2],1000/nomFreq);
     %deliver our stimuli:
-    for i=1:nTests
-    %    x=stimObj.getSequenceStatus();
-        if mod(i,2)
-            stimObj.manualStim(chanList(j),1);
-        else
-            stimObj.manualStim(chanList(j),2);
-        end
-        if(mod(i,100) == 0)
-            disp(i)
-        end
-        pause(1/nomFreq);%+rand/20);%wait a bit to get different timings relative to cerebus clock
-    end
+    stimObj.play(nTests);
     pause(.5)
     %stop recording:
     cbmex('fileconfig',fName,'',0)
-%     impedanceData=stimObj.testElectrodes();
-%     save([folder,'impedance', tStr,num2str(j),'.mat'],'impedanceData','-v7.3')
-%     cbmex('fileconfig',fName,'',0)
 end
 
 cbmex('close')

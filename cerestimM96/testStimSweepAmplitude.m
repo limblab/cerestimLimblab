@@ -39,11 +39,7 @@ end
 % save([folder,'impedance0',tStr,'.mat'],'impedanceData','-v7.3')
 
 %establish cerebus connection
-cbmex('open')
-%start file storeage app, or stop recording if already started
-fName='temp';
-cbmex('fileconfig',fName,'',0)
-pause(1)
+initializeCerebus();
 
 % sweep through amplitudes numSweep times
 for j = 1:numel(chanList)
@@ -71,9 +67,7 @@ for j = 1:numel(chanList)
                                     'interphase',interphase,...
                                     'frequency',freq);   
 
-            
-            %loop through channels and log a test file for each one:
-                %deliver our stimuli:
+            %deliver our stimuli:
             for i=1:nTests
             %    x=stimObj.getSequenceStatus();
                 if mod(i,2)
@@ -81,10 +75,7 @@ for j = 1:numel(chanList)
                 else
                     stimObj.manualStim(chanList(j),2);
                 end
-    %             if(mod(i,100) == 0)
-    %                 disp(i)
-    %             end
-                pause(1/nomFreq);%+rand/20);%wait a bit to get different timings relative to cerebus clock
+                pause(1/nomFreq);
             end
 
         end %amp for

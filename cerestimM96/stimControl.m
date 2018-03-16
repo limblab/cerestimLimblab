@@ -150,16 +150,11 @@ try
         end
         %if we got here, then we found a stim word. use the code to issue a
         %stim command:
-        pause(stimDelay)%wait to align stim start with middle of force rise
-            %construct stim sequence based on word
-        stimObj.beginSequence;
-            stimObj.beginGroup;
-            for i=1:numel(EL)
-                stimObj.autoStim(EL(i),stimCode)%stim codes range 0-15, so add 1 to get on matlabs dumb 1 based indexing
-            end
-            stimObj.endGroup;
-        stimObj.endSequence;
+        tic
+        buildStimSequence(stimObj,EL(i),stimCode,10);
+        pause(stimDelay-toc);
         stimObj.play(1)
+        
         if ~isempty(pollInterval)
             pause(pollInterval)
         end
