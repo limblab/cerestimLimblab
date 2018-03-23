@@ -31,15 +31,15 @@ pWidth2 = 200;
 interpulse = 53;
 interphase = 300;
 
-doublePulseLatency = 10; % in ms
+doublePulseLatency = 100; % in ms
 
 nPulses = 1;
-nomFreq = 5;
+nomFreq = 1;
 nTests = 100;
 chanList = [1];
 
-folder = '';
-prefix = '';
+prefix='Han_stimswitchFastsettle_';
+folder='C:\data\stimTesting\testData\';
 
 %configure params
 freq=floor(1/((pWidth1+pWidth2+interphase+interpulse)*10^-6));%hz
@@ -85,13 +85,15 @@ for j=1:numel(chanList)
         stimObj.beginGroup()
         % stimulate once on all channels
         for k=1:numel(chanList)
-            stimObj.autoStim(chanList(k),waveList(i))
+            stimObj.autoStim(chanList(k),i)
         end
+        stimObj.endGroup()
         % pause for doublePulseLatency
         stimObj.wait(doublePulseLatency)
         % stimulate again on all channels
+        stimObj.beginGroup()
         for k=1:numel(chanList)
-            stimObj.autoStim(chanList(k),waveList(i))
+            stimObj.autoStim(chanList(k),i)
         end
         stimObj.endGroup()
         % wait the nominal frequency
@@ -101,7 +103,11 @@ for j=1:numel(chanList)
     
     % deliver our stimuli
     stimObj.play(nTests);
-
+    pause(2*(nTests+3)/nomFreq + 2*(nTests+3)*doublePulseLatency/1000 + 3) % pause for longer than needed just in case timing is off
+    % tell cerestim to stop stimulating (it should be done, but to prevent
+    % errors)
+    stimObj.stop();
+    pause(0.5 + rand()/2) % just in case there is some delay in .stop()
     pause(.5)
     %stop recording:
     cbmex('fileconfig',fName,'',0)
