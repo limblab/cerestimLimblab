@@ -1,11 +1,12 @@
 %test cerestim96 recording during stim:
-%testStim configures the stimulator with a pair of waveforms, one cathodal
+%testStimDoublePulse configures the stimulator with a pair of waveforms, one cathodal
 %leading, the other anodal leading. testStim then initiates cerebus
 %recording, followed by issuing alternating cathodal and anodal stimuli
-%
-%test stim is intended to be called within a wrapper script that configures
-%the stim parameters. The wrapping script must set the following
-%parameters:
+% Two cathodal or anodal pulses are sent in succession with latency based
+% on doublePulseLatency
+
+
+%testStimDoublePulse requires the following variables
 %amp1           :   amplitude of first pulse phase
 %amp2           :   amplitude of second pulse phase
 %pWidth1        :   width of first pulse phase
@@ -22,6 +23,24 @@
 %nomFreq        :   frequency that matlab will attempt to stimulate at
 %nTests         :   number of times the script will issue a cathodal/anodal
 %                       stim pair
+%doublePulseLatency  : time in ms between the double pulses
+amp1 = 40;
+amp2 = 40;
+pWidth1 = 200;
+pWidth2 = 200;
+interpulse = 53;
+interphase = 300;
+
+doublePulseLatency = 10; % in ms
+
+nPulses = 1;
+nomFreq = 5;
+nTests = 100;
+chanList = [1];
+
+folder = '';
+prefix = '';
+
 %configure params
 freq=floor(1/((pWidth1+pWidth2+interphase+interpulse)*10^-6));%hz
 
@@ -60,17 +79,30 @@ initializeCerebus();
 for j=1:numel(chanList)
     disp(['working on chan: ',num2str(chanList(j))])
     fName=startcerebusStimRecording(chanList(j),amp1,amp2,pWidth1,pWidth2,interpulse,j,folder,prefix);
+    % build stim sequence
+    stimObj.beginSequence()
+    for i=1:2 % cathodal then anodal
+        stimObj.beginGroup()
+        % stimulate once on all channels
+        for k=1:numel(chanList)
+            stimObj.autoStim(chanList(k),waveList(i))
+        end
+        % pause for doublePulseLatency
+        stimObj.wait(doublePulseLatency)
+        % stimulate again on all channels
+        for k=1:numel(chanList)
+            stimObj.autoStim(chanList(k),waveList(i))
+        end
+        stimObj.endGroup()
+        % wait the nominal frequency
+        stimObj.wait(1000/nomFreq - doublePulseLatency + rand()*20) % I think
+    end
+    stimObj.endSequence()
     
-    buildStimSequence(stimObj,chanList(j),[1 2],1000/nomFreq);
-    %deliver our stimuli:
-    stimObj.play(nTests); % apparently MATLAB is still running while the cerebus is sending stimulation
-    % we need to pause long enough for the nTests to be done otherwise
-    % we get an error
-    pause(2*(nTests+3)/nomFreq + 3) % pause for longer than needed just in case timing is off
-    % tell cerestim to stop stimulating (it should be done, but to prevent
-    % errors)
-    stimObj.stop();
-    pause(0.5 + rand()/2) % just in case there is some delay in .stop()
+    % deliver our stimuli
+    stimObj.play(nTests);
+
+    pause(.5)
     %stop recording:
     cbmex('fileconfig',fName,'',0)
 end
@@ -80,3 +112,17 @@ stimObj.disconnect();
 stimObj.delete()
 clear stimObj
 pause(2)
+
+
+%     for s = 1:nTests
+%         disp(['working on pulse: ',num2str(i)])
+% %         % deliver either a cathodal first or anodal first pulse
+% %         stimObj.manualStim(chanList(j),mod(s,2)+1);
+% %         % wait the desired latency
+% %         pause(doublePulseLatency/1000);
+% %         % deliver a second pulse
+% %         stimObj.manualStim(chanList(j),mod(s,2)+1);
+% %         % wait a bit
+% %         pause(1/nomFreq - doublePulseLatency/1000 + rand()/20);
+%     end
+    %

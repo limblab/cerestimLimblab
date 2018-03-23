@@ -49,6 +49,8 @@ buildStimSequence(stimObj,chanList,[1 2],100);
 %establish cerebus connection
 initializeCerebus();
 
+startcerebusStimRecording(chanList,amp1,amp2,pWidth1,pWidth2,interpulse,1,[folder,prefix]);
+
 disp(['stimulating'])
 %deliver our stimuli:
 stimObj.play(nTests)%plays the scripted sequence of stimuli
