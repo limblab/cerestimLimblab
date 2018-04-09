@@ -6,18 +6,21 @@ pulseWidthList=[...
                 ];
             
 pulseAmpList=[  ...
-                10,10;...
+                40,40;...
                 ];
             
 
-interpulseList=[53];
-prefix='Han_stimswitchFastsettle_';
-folder='C:\data\stimTesting\testData\';
-chanList = [33:34];
+interpulseList = 53;
+prefix='Han_stimswitchFastsettle_single_';
+folder='C:\data\stimTesting\Han_20180331_doublePulse\';
+
+chanList = [36];
 interphase=53;
 nPulses=1;
-nomFreq=10;
+
+nomFreq=100;
 nTests=100;
+
 for m=1:numel(interpulseList)
     for j=1:size(pulseAmpList,1)
         pWidth1=pulseWidthList(j,1)%in us

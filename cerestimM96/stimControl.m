@@ -13,7 +13,7 @@
 clear all
 %script setup- 
 %general setup:
-maxSessionTime=2*60*60;%max lenght of session in seconds
+
 %configure stim parameters
 electrodeList{1}=[42];
 % electrodeList{2}=[1];
@@ -25,12 +25,12 @@ pulseWidth=200;%time for each phase of a pulse in uS
 freq=100;%200;%frequency of pulses in Hz
 trainLength=0.1;%length of the pulse train in s
 numPulses=freq*trainLength;
-stimDelay=0.200;%0.115;%delays start of stim train to coincide with middle of force rise
+stimDelay=0;%0.115;%delays start of stim train to coincide with middle of force rise
 % configure cbmex parameters:
 stimWord=hex2dec('60');
 DBMask=hex2dec('f0');
 maxWait=400;%maximum interval to wait before exiting
-pollInterval=.01;%polling interval in s
+pollInterval=0.01;%polling interval in s
 chan=151;%digital input is CH151
 
 %initialize timer variables

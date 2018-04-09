@@ -24,23 +24,26 @@
 %nTests         :   number of times the script will issue a cathodal/anodal
 %                       stim pair
 %doublePulseLatency  : time in ms between the double pulses
-amp1 = 40;
-amp2 = 40;
+amp1 = 50;
+amp2 = 50;
 pWidth1 = 200;
 pWidth2 = 200;
-interpulse = 53;
-interphase = 300;
+interpulse = 300;
+interphase = 53;
 
-doublePulseLatency = 30; % lets do 2, 4, 6 ,8, 10, 20, 30 % in ms
+nPulses = 50; % number of pulses in a train %% beginSequence can only have 128 commands, 
+% which limits us to 31 pulses in a train if we do both cathodal and anodal
+% trains
 
-nPulses = 1;
-nomFreq = 5;
-nTests = 100;
+pulseLatency = 1000/100; % lets do 2, 4, 6 ,8, 10, 20, 30 % in ms
 
-chanList = [66 68 91 92 94 96]; % 
+nomFreq = 0.5; % frequency between start of trains
+nTests = 5; % n times to do a train (total trains = this*2 because anodal then cathodal trains)
 
-prefix=['Han_stimswitchFastsettle_dpl',num2str(doublePulseLatency)];
-folder='C:\data\stimTesting\Han_20180408_doublePulse\';
+chanList = [96]; % 
+
+prefix=['Butter_20180407_cuneate_',num2str(pulseLatency),'_nPulses',num2str(nPulses)];
+folder='C:\data\Butter\Butter_20180407_cuneateStimMapping\';
 
 %configure params
 freq=floor(1/((pWidth1+pWidth2+interphase+interpulse)*10^-6));%hz
@@ -57,7 +60,7 @@ end
 
 stimObj.setStimPattern('waveform',1,...
                         'polarity',0,...
-                        'pulses',nPulses,...
+                        'pulses',1,...
                         'amp1',amp1,...
                         'amp2',amp2,...
                         'width1',pWidth1,...
@@ -66,7 +69,7 @@ stimObj.setStimPattern('waveform',1,...
                         'frequency',freq);
  stimObj.setStimPattern('waveform',2,...
                         'polarity',1,...
-                        'pulses',nPulses,...
+                        'pulses',1,...
                         'amp1',amp1,...
                         'amp2',amp2,...
                         'width1',pWidth1,...
@@ -82,34 +85,28 @@ for j=1:numel(chanList)
     fName=startcerebusStimRecording(chanList(j),amp1,amp2,pWidth1,pWidth2,interpulse,j,folder,prefix);
     % build stim sequence
     stimObj.beginSequence()
-    for i=1:2 % cathodal then anodal
-        stimObj.beginGroup()
-        % stimulate once on all channels
-        for k=1:numel(chanList)
-            stimObj.autoStim(chanList(k),i)
+    for cathAnod = 1:1 % cathodal then anodal trains
+        for np=1:nPulses % train pulses
+%             stimObj.beginGroup()
+            % stimulate once on all channels
+%             for k=1:numel(chanList)
+                stimObj.autoStim(chanList(k),cathAnod)
+%             end
+%             stimObj.endGroup()
+            % pause for pulseLatency
+            stimObj.wait(pulseLatency)
         end
-        stimObj.endGroup()
-        % pause for doublePulseLatency
-        stimObj.wait(doublePulseLatency)
-        % stimulate again on all channels
-        stimObj.beginGroup()
-        for k=1:numel(chanList)
-            stimObj.autoStim(chanList(k),i)
-        end
-        stimObj.endGroup()
-        % wait the nominal frequency
-        stimObj.wait(1000/nomFreq - doublePulseLatency + rand()*20) % I think
+        stimObj.wait(1000/nomFreq + rand()*20)
     end
     stimObj.endSequence()
     
     % deliver our stimuli
     stimObj.play(nTests);
-    pause(2*(nTests+3)/nomFreq + 2*(nTests+3)*doublePulseLatency/1000 + 3) % pause for longer than needed just in case timing is off
+    pause((nTests+3)/nomFreq + 3) % pause for longer than needed just in case timing is off
     % tell cerestim to stop stimulating (it should be done, but to prevent
     % errors)
     stimObj.stop();
     pause(0.5 + rand()/2) % just in case there is some delay in .stop()
-    pause(.5)
     %stop recording:
     cbmex('fileconfig',fName,'',0)
 end

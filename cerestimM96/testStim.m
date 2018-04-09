@@ -61,16 +61,16 @@ for j=1:numel(chanList)
     disp(['working on chan: ',num2str(chanList(j))])
     fName=startcerebusStimRecording(chanList(j),amp1,amp2,pWidth1,pWidth2,interpulse,j,folder,prefix);
     
-    buildStimSequence(stimObj,chanList(j),[1 2],1000/nomFreq);
+    buildStimSequence(stimObj,chanList(j),[1,2],1000/nomFreq);
     %deliver our stimuli:
     stimObj.play(nTests); % apparently MATLAB is still running while the cerebus is sending stimulation
     % we need to pause long enough for the nTests to be done otherwise
     % we get an error
-    pause(2*(nTests+3)/nomFreq + 3) % pause for longer than needed just in case timing is off
+    pause(2*(nTests+3)/nomFreq + nPulses*interpulse/(10^6) + 3) % pause for longer than needed just in case timing is off
     % tell cerestim to stop stimulating (it should be done, but to prevent
     % errors)
     stimObj.stop();
-    pause(0.5 + rand()/2) % just in case there is some delay in .stop()
+%     pause(0.5 + rand()/2) % just in case there is some delay in .stop()
     %stop recording:
     cbmex('fileconfig',fName,'',0)
 end
