@@ -1,9 +1,29 @@
+% This file is mean to be called by 'script_runStimAndRecord.' These two functions 
+% use a set of wave shapes (amplitude, pulsewidth, interphase, interpulse, polarities)
+% and stimulates with single pulses randomly at a set frequency. 
+% This is used when the order of pulses should be interleaved during an experiment. 
+% Stimulation parameters and which waveform/channel is stimulated is stored in  a
+% '..._waveformsSent' mat file. 
 
-% runs stim and record experiments. this is supposed to be more flexible
-% than the script and make my life easier. it probably doesn't do that.
-% assumes the following exists: folder,prefix,chanList,amp1,amp2,pWidth1,
-%   pWidth2,interphase,interpulse,nPulses,nomFreq,nTests, arg
 
+% Waveform parameters: All array sizes should be the same, the ith waveform
+% is built by selecting the ith parameter in each of the following arrays
+% amp1: amplitude of the first phase
+% amp2: amplitude of the second phase
+% pWidth1: pulse width of the first phase
+% pWidth2: pulse width of the second phase
+% interphase: time between phases (min 53us)
+% interpulse: time between pulses (for fast settle circuit, 300us is common)
+% polarities: polarity of the waveform (0 cathodal, 1 anodal)
+
+% nPulses: number of pulses in a single train (1 for a single pulse)
+% nomFreq: frequency to stimulate
+% nTests: number of trains
+% chanList: list of channels to stimulate. Channels and waveform are
+%           independent
+% saveImpedance: run an impedance test?
+% folder: folder to save files in
+% prefix: prefix for file name
 if(numel(chanList) > 1)
     interleaveChanList = 1;
 else
@@ -38,15 +58,11 @@ end
 if ~stimObj.isConnected();
     error('testStim:noStimulator','could not establish connection to stimulator')
 end
-% establish cerebus connection
-cbmex('open')
-%start file storeage app, or stop recording if already started
-fName='temp';
-cbmex('fileconfig',fName,'',0)
-pause(3)
+
+%establish cerebus connection
+initializeCerebus();
 
 %% set up stim patterns
-numPatterns = numel(amp1)*numel(interpulse)*numel(interphase)*numel(pWidth1)*numel(pWidth2);
 
 patternCounter = 1;
 waveforms = [];
@@ -173,8 +189,8 @@ for j=1:maxChannels
     cbmex('fileconfig',fName,'',0)
 %     impedanceData=stimObj.testElectrodes();
 %     save([folder,'impedance', tStr,num2str(j),'.mat'],'impedanceData','-v7.3')
-    cbmex('fileconfig',fName,'',0)
     pause(2)
+    
     if(endNumber >= 10)
         save(strcat(folder,fstr(1:end-2),'waveformsSent_',num2str(endNumber)),'waveforms');    
     else
