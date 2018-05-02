@@ -15,23 +15,29 @@ clear all
 %general setup:
 
 %configure stim parameters
+
+usingStimSwitchToRecord = 1;
+
 electrodeList{1}=[42];
 % electrodeList{2}=[1];
 % electrodeList{3}=[2];
 % electrodeList{4}=[22];
 % electrodeList{5}=[62];
-stimAmps=[30];%different amplitudes of stimulation
+stimAmps=[90];%different amplitudes of stimulation
 pulseWidth=200;%time for each phase of a pulse in uS
-freq=100;%200;%frequency of pulses in Hz
-trainLength=0.1;%length of the pulse train in s
+freq=200;%200;%frequency of pulses in Hz
+trainLength=0.25;%length of the pulse train in s
+interpulse = 250;
 numPulses=freq*trainLength;
 stimDelay=0;%0.115;%delays start of stim train to coincide with middle of force rise
 % configure cbmex parameters:
 stimWord=hex2dec('60');
 DBMask=hex2dec('f0');
 maxWait=400;%maximum interval to wait before exiting
-pollInterval=0.01;%polling interval in s
+pollInterval=[];%polling interval in s
 chan=151;%digital input is CH151
+
+nomFreq = floor(1/((pulseWidth*2+53+interpulse)*10^-6));
 
 %initialize timer variables
 sessionTimer=tic;
@@ -66,7 +72,18 @@ try
     for i=1:numel(stimAmps)
         %configure waveform:
         disp(['setting stim pattern; ',num2str(i)])
-        stimObj.setStimPattern('waveform',i,...
+        if(usingStimSwitchToRecord)
+            stimObj.setStimPattern('waveform',i,...
+                                'polarity',0,...
+                                'pulses',1,...
+                                'amp1',stimAmps(i),...
+                                'amp2',stimAmps(i),...
+                                'width1',pulseWidth,...
+                                'width2',pulseWidth,...
+                                'interphase',53,...
+                                'frequency',nomFreq);
+        else
+            stimObj.setStimPattern('waveform',i,...
                                     'polarity',0,...
                                     'pulses',numPulses,...
                                     'amp1',stimAmps(i),...
@@ -75,6 +92,8 @@ try
                                     'width2',pulseWidth,...
                                     'interphase',53,...
                                     'frequency',freq);
+        end
+        
     end
     h=msgbox('Central Connection is open: stimulation is running','CBmex-notifier');
     btnh=findobj(h,'style','pushbutton');
@@ -151,9 +170,16 @@ try
         %if we got here, then we found a stim word. use the code to issue a
         %stim command:
         tic
-        buildStimSequence(stimObj,EL(i),stimCode,10);
+        % if using stim switch to record
+        if(usingStimSwitchToRecord)
+            buildStimSequence(stimObj,EL(i),repmat(stimCode,numPulses,1),1000/freq); % wait takes in milliseconds
+        else
+            buildStimSequence(stimObj,EL(i),stimCode,10); % wait takes in milliseconds
+        end
+        
         pause(stimDelay-toc);
         stimObj.play(1)
+        pause(trainLength + 0.1);
         
         if ~isempty(pollInterval)
             pause(pollInterval)
