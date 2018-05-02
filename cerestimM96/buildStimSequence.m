@@ -17,15 +17,28 @@ function buildStimSequence(stimObj,chanList,waveList,pulseWait)
     %this interval, and that this time will be applied starting AFTER the
     %interpulse interval time in the last waveform of the waveList
     
-    stimObj.beginSequence()
-        for i=1:numel(waveList)
-            stimObj.beginGroup()
-                for k=1:numel(chanList)
-                    stimObj.autoStim(chanList(k),waveList(i))
-                end
-            stimObj.endGroup()
-            stimObj.wait(pulseWait)
-        end
-    stimObj.endSequence()
+    
+    % there is a limit on the number of commands can be in a sequence, so
+    % if we are only stimulating on a single electrode, do not call
+    % beginGroup and endGroup to minimize the number of commands
+    if(numel(chanList) == 1)
+        stimObj.beginSequence()
+            for i=1:numel(waveList)
+                stimObj.autoStim(chanList,waveList(i))
+                stimObj.wait(pulseWait)
+            end
+        stimObj.endSequence()
+    else
+        stimObj.beginSequence()
+            for i=1:numel(waveList)
+                stimObj.beginGroup()
+                    for k=1:numel(chanList)
+                        stimObj.autoStim(chanList(k),waveList(i))
+                    end
+                stimObj.endGroup()
+                stimObj.wait(pulseWait)
+            end
+        stimObj.endSequence()
+    end
 
 end
