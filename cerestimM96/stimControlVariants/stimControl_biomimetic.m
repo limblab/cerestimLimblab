@@ -62,6 +62,7 @@ for num_elec_idx = 1:3
 end
 
 %%
+
 usingStimSwitchToRecord = 0;
 
 stimAmp=20;%different amplitudes of stimulation
