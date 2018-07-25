@@ -37,10 +37,10 @@ nPulses = 1;
 nomFreq = 5;
 nTests = 100;
 
-chanList = [66 68 91 92 94 96]; % 
+chanList =[9 14 20 25 27 29 31 32]; % 
 
 prefix=['Han_stimswitchFastsettle_dpl',num2str(doublePulseLatency)];
-folder='C:\data\stimTesting\Han_20180408_doublePulse\';
+folder='C:\data\stimTesting\Han_20180409_doublePulse\';
 
 %configure params
 freq=floor(1/((pWidth1+pWidth2+interphase+interpulse)*10^-6));%hz

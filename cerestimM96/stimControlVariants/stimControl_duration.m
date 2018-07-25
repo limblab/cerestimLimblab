@@ -16,21 +16,22 @@ clear all
 
 %configure stim parameters
 
-usingStimSwitchToRecord = 0;
+usingStimSwitchToRecord = 1;
 
-electrodeList{1} = [10]; 
-electrodeList{2}=[10,62];
-electrodeList{3}=[10,62,34];
-electrodeList{4}=[10,62,34,92];
-electrodeList{5}=[62];
-% electrodeList{6} = [];
-
-stimAmp=[100];%different amplitudes of stimulation
+trainLengths=[0.025,0.05,0.075,0.1,0.125,0.15,0.2,0.25,0.3];%different train lengths of stimulation
+for i = 1:numel(trainLengths)
+    electrodeList{i} = [11];
+end
+% electrodeList{2}=[1];
+% electrodeList{3}=[2];
+% electrodeList{4}=[22];
+% electrodeList{5}=[62];
 pulseWidth=200;%time for each phase of a pulse in uS
-freq = 330; % Hz
-trainLength=0.12;%length of the pulse train in s
+freq = 200; % Hz
+stimAmp = 100; % uA
+% trainLength=0.2;%length of the pulse train in s
 interpulse = 250;
-numPulses=freq*trainLength;
+numPulses=freq*trainLengths;
 stimDelay=0;%0.115;%delays start of stim train to coincide with middle of force rise
 % configure cbmex parameters:
 stimWord=hex2dec('60');
@@ -71,31 +72,32 @@ try
     end
 
     %establish stimulation waveforms for each stimulation amplitude:
+    for i=1:numel(trainLengths)
         %configure waveform:
-        
-%     disp(['setting stim pattern; ',num2str(i)])
-    if(usingStimSwitchToRecord)
-        stimObj.setStimPattern('waveform',1,...
-                            'polarity',0,...
-                            'pulses',1,...
-                            'amp1',stimAmp,...
-                            'amp2',stimAmp,...
-                            'width1',pulseWidth,...
-                            'width2',pulseWidth,...
-                            'interphase',53,...
-                            'frequency',nomFreq);
-    else
-        stimObj.setStimPattern('waveform',1,...
+        disp(['setting stim pattern; ',num2str(i)])
+        if(usingStimSwitchToRecord)
+            stimObj.setStimPattern('waveform',i,...
                                 'polarity',0,...
-                                'pulses',numPulses,...
+                                'pulses',1,...
                                 'amp1',stimAmp,...
                                 'amp2',stimAmp,...
                                 'width1',pulseWidth,...
                                 'width2',pulseWidth,...
                                 'interphase',53,...
-                                'frequency',freq);
+                                'frequency',nomFreq);
+        else
+            stimObj.setStimPattern('waveform',i,...
+                                    'polarity',0,...
+                                    'pulses',numPulses(i),...
+                                    'amp1',stimAmp,...
+                                    'amp2',stimAmp,...
+                                    'width1',pulseWidth,...
+                                    'width2',pulseWidth,...
+                                    'interphase',53,...
+                                    'frequency',freq);
+        end
+        
     end
-    
     h=msgbox('Central Connection is open: stimulation is running','CBmex-notifier');
     btnh=findobj(h,'style','pushbutton');
     set(btnh,'String','Close Connection');
@@ -151,7 +153,7 @@ try
                 end
                 continue
             end
-            if stimStart+trainLength>=toc(sessionTimer)
+            if stimStart+trainLengths(end)>=toc(sessionTimer)
                 %this is a re-throw of the same word (we usually pull the same word 3 times)
                 continue
             end
@@ -173,14 +175,14 @@ try
         tic
         % if using stim switch to record
         if(usingStimSwitchToRecord)
-            buildStimSequence(stimObj,EL,repmat(stimCode,numPulses,1),1000/freq); % wait takes in milliseconds
+            buildStimSequence(stimObj,EL,repmat(stimCode,numPulses(stimCode),1),1000/freq); % wait takes in milliseconds
         else
-            buildStimSequence(stimObj,EL,1,10); % wait takes in milliseconds
+            buildStimSequence(stimObj,EL,stimCode,10); % wait takes in milliseconds
         end
         
         pause(stimDelay-toc);
         stimObj.play(1)
-        pause(trainLength + 0.1);
+        pause(trainLengths(end) + 0.1);
         
         if ~isempty(pollInterval)
             pause(pollInterval)

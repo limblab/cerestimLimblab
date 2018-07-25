@@ -10,27 +10,66 @@
 %same amplitude by repeating the amplitude definition.
 %
 %User must also configure pulse parameters
-clear all
 %script setup- 
 %general setup:
 
-%configure stim parameters
+%%configure stim parameters
+chan_num_all = chan_num;
+max_freq = 330;
+num_elec = 16:8:32;
 
+chan_num = {};
+wave_freq = {};
+
+[freq_all_norm] = unique(biomimetic_freq_norm);
+freq_all_norm(freq_all_norm == 0) = [];
+freq_all = freq_all_norm*max_freq;
+
+freq_all(freq_all < 16) = 16;
+
+chan_num{3} = chan_num_all;
+wave_freq{3} = biomimetic_freq_norm;
+
+keep_idx_24 = [randperm(16,12), randperm(16,12) + 16];
+chan_num{2} = chan_num_all(keep_idx_24);
+wave_freq{2} = biomimetic_freq_norm(keep_idx_24);
+keep_idx_16 = [randperm(12,8), randperm(12,8) + 8];
+chan_num{1} = chan_num{2}(keep_idx_16);
+wave_freq{1} = biomimetic_freq_norm(keep_idx_16);
+
+%%
+wave_mappings = {};
+
+for num_elec_idx = 1:3
+    for bio = 1:2
+        wave_mappings{end+1} = zeros(num_elec(num_elec_idx)/2,3); % chan_num, wave_freq, wave_num
+
+        if(bio == 1) % biomimetic
+            chan_ = chan_num{num_elec_idx}(1:num_elec(num_elec_idx)/2);
+            freq_ = wave_freq{num_elec_idx}(1:num_elec(num_elec_idx)/2);
+            for freq_idx = 1:numel(freq_)
+                freq_all_idx = find(freq_(freq_idx) == freq_all_norm);
+                wave_mappings{end}(freq_idx,2) = freq_all(freq_all_idx);
+                wave_mappings{end}(freq_idx,3) = freq_all_idx;
+                wave_mappings{end}(freq_idx,1) = chan_(freq_idx);
+            end
+            
+        else % nonbiomimetic
+            wave_mappings{end}(:,1) = chan_num{num_elec_idx}(randperm(num_elec(num_elec_idx),num_elec(num_elec_idx)/2))';
+            wave_mappings{end}(:,2:3) = wave_mappings{end-1}(:,2:3);
+        end
+    end
+end
+
+%%
 usingStimSwitchToRecord = 0;
 
-electrodeList{1} = [10]; 
-electrodeList{2}=[10,62];
-electrodeList{3}=[10,62,34];
-electrodeList{4}=[10,62,34,92];
-electrodeList{5}=[62];
-% electrodeList{6} = [];
-
-stimAmp=[100];%different amplitudes of stimulation
+stimAmp=20;%different amplitudes of stimulation
 pulseWidth=200;%time for each phase of a pulse in uS
-freq = 330; % Hz
+max_freq = 330; % Hz
 trainLength=0.12;%length of the pulse train in s
 interpulse = 250;
-numPulses=freq*trainLength;
+
 stimDelay=0;%0.115;%delays start of stim train to coincide with middle of force rise
 % configure cbmex parameters:
 stimWord=hex2dec('60');
@@ -74,18 +113,10 @@ try
         %configure waveform:
         
 %     disp(['setting stim pattern; ',num2str(i)])
-    if(usingStimSwitchToRecord)
-        stimObj.setStimPattern('waveform',1,...
-                            'polarity',0,...
-                            'pulses',1,...
-                            'amp1',stimAmp,...
-                            'amp2',stimAmp,...
-                            'width1',pulseWidth,...
-                            'width2',pulseWidth,...
-                            'interphase',53,...
-                            'frequency',nomFreq);
-    else
-        stimObj.setStimPattern('waveform',1,...
+    for i = 1:15
+        freq = ceil(freq_all(i));
+        numPulses=ceil(freq*trainLength);
+        stimObj.setStimPattern('waveform',i,...
                                 'polarity',0,...
                                 'pulses',numPulses,...
                                 'amp1',stimAmp,...
@@ -160,11 +191,10 @@ try
             stimCode=words(idx(1))-stimWord+1;
             disp(['stimulating with code: ',num2str(stimCode)])
                 
-            if stimCode>numel(electrodeList) || stimCode<1
+            if stimCode>numel(wave_mappings) || stimCode<1
                 warning('managed to get a bad stimcode, cant assign electrode group')
                 continue
             end
-            EL=electrodeList{stimCode};
             %and re-set the stimStart variable
             stimStart=toc(sessionTimer);
         end
@@ -173,9 +203,9 @@ try
         tic
         % if using stim switch to record
         if(usingStimSwitchToRecord)
-            buildStimSequence(stimObj,EL,repmat(stimCode,numPulses,1),1000/freq); % wait takes in milliseconds
+            buildStimSequence_biomimetic(stimObj,wave_mappings{stimCode},1000/max_freq); % wait takes in milliseconds
         else
-            buildStimSequence(stimObj,EL,1,10); % wait takes in milliseconds
+            buildStimSequence_biomimetic(stimObj,wave_mappings{stimCode},10); % wait takes in milliseconds
         end
         
         pause(stimDelay-toc);

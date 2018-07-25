@@ -1,26 +1,68 @@
 %% Chips 1
-for mm = 1:2
+for mm = 1:20
+    disp(['stimulation iteration: ',num2str(mm)])
     clear;
 
-    folder='C:\data\Han\Han_20180310_chic201802\';
-    prefix='Han_20180310_chic201802'; % no underscore after prefix please
+    folder='C:\data\Han\Han_20180720\';
+    prefix='Han_20180720_'; % no underscore after prefix please
     
     % all parameters need to be the same size matrix
-    amp1=[10,10,20,20,30,30];%in uA
-    pWidth1=[200,200,200,200,200,200];%in us
-    amp2=[10,10,20,20,30,30];%in uA
-    pWidth2=[200,200,200,200,200,200];%in us
+    amp1=[50];%in uA
+    pWidth1=[200];%in us
+    amp2=[50];%in uA
+    pWidth2=[200];%in us
     
-    interphase=[53,53,53,53,53,53,53];
-    interpulse=[300,300,300,300,300,300];
-    polarities = [0,1,0,1,0,1]; % 0 = cathodic first
+    interphase=[53];
+    interpulse=[300];
+    polarities = [0]; % 0 = cathodic first
    
     
     nPulses=1; % pulses per train
-    nomFreq=5;
+%     freq=200; %frequency of the trains. This may be overridden in runStimAnd Record
+
+    nomFreq=10; %how frequently we deliver a train, if trains are single pulse, this is the stim frequency
+    nTests=2000; % # of trains
+
+    chanList=[3:3:96]; % pick some channels
+
+    arg = {'interleaveChanList',1};
+    saveImpedance=0;
+%     if(mm == 1)
+%         saveImpedance = 1;
+%     else
+%         saveImpedance = 0;
+%     end
+
+    runStimAndRecord;
+end
+
+%% Joe stim channel test
+for mm = 1:2
+    disp(['stimulation iteration: ',num2str(mm)])
+    clear;
+
+    folder='C:\data\Han\Han_20180718_RW_dukeProjBox_asymmetric\';
+    prefix='Han_20180718_dukeProjBox0718_chan10con_interpulse150'; % no underscore after prefix please
+    
+    % all parameters need to be the same size matrix
+    amp1=[40,40,10,4];%in uA
+    pWidth1=[100,100,400,1000];%in us
+    amp2=[40,40,40,40];%in uA
+    pWidth2=[100,100,100,100];%in us
+    
+    interphase=[53,53,53,53];
+    interpulse=[150,150,150,150];
+    polarities = [0,1,1,1]; % 0 = cathodic first
+   
+    
+    nPulses=1; % pulses per train
+%     freq=1; %frequency of the trains. This may be overridden in runStimAnd Record
+    clear freq
+    
+    nomFreq=5; %how frequently we deliver a train, if trains are single pulse, this is the stim frequency
     nTests=750; % # of trains
 
-    chanList=[25]; % pick some channels
+    chanList=[10]; % pick some channels
 
     arg = {'interleaveChanList',1};
     saveImpedance=0;

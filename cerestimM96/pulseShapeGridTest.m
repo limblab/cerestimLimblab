@@ -3,23 +3,26 @@
 
 pulseWidthList=[...
                 200,200;...
+                200,200;...
                 ];
             
 pulseAmpList=[  ...
-                40,40;...
+                20,20;
+                100,100;...
                 ];
             
 
-interpulseList = 53;
-prefix='Han_stimswitchFastsettle_single_';
-folder='C:\data\stimTesting\Han_20180331_doublePulse\';
+interpulseList = [53,];
+% interpulseList = 53;
+prefix='Saline_array_20180712_dukeProjBox_chan92con_';
+folder='C:\data\Testing\Saline_dukeProjBox_20180712\';
 
-chanList = [36];
+chanList = 96;
 interphase=53;
 nPulses=1;
 
-nomFreq=100;
-nTests=100;
+nomFreq=5;
+nTests=5;
 
 for m=1:numel(interpulseList)
     for j=1:size(pulseAmpList,1)

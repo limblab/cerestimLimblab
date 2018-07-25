@@ -1,27 +1,28 @@
 %test cerestim96 recording during stim:
 
 % save params
-folder='C:\data\stimTesting\ArtificialMonkey_20171227_noFastSettle\';
-prefix='ArtificialMonkey_20171227_modAmp'; % no _ needed
+folder='C:\data\Han\Han_20180718_dukeProjBox0718_ampSweep\';
+prefix='Han_20180718_dukeProjBox_chan95con'; % no _ needed
 
 %configure params
-chanList=[1:10];
+chanList=[95];
 
 minAmp = 1;
 maxAmp = 100;
 ampStep = 1;
-numSweeps = 10;
+numSweeps = 4;
 
 pWidth1=200;%in us
 pWidth2=200;%in us
 
 interphase=53;
+
 interpulse=250;
 
 freq=floor(1/((pWidth1+pWidth2+interphase+interpulse)*10^-6));%hz
 
 nPulses=1;
-nomFreq=10;
+nomFreq=5;
 nTests=2;
 
 % make stim object
@@ -44,7 +45,7 @@ initializeCerebus();
 % sweep through amplitudes numSweep times
 for j = 1:numel(chanList)
     disp(['working on chan: ',num2str(chanList(j))])
-    startcerebusStimRecording(chanList(j),amp1,amp2,pWidth1,pWidth2,interpulse,j);
+    fName=startcerebusStimRecording(chanList(j),0,0,pWidth1,pWidth2,interpulse,j,folder,prefix);
     
     for sweepIdx = 1:numSweeps % sweep through amps
         for amp = minAmp:ampStep:maxAmp

@@ -50,10 +50,20 @@ numPatterns = numel(amp1)*numel(interpulse)*numel(interphase)*numel(pWidth1)*num
 
 patternCounter = 1;
 waveforms = [];
+flag_freq_workspace = 0;
+if exist('freq','var')
+    warning('using workspace freq variable. If you intended the frequency to be computed from the pulse length and interpulse interval, check your calling script')
+    flag_freq_workspace = 1;
+
+end
 
 % generate waveforms
 for idx = 1:numel(amp1)
-    freq=floor(1/((pWidth1(idx)+pWidth2(idx)+interphase(idx)+interpulse(idx))*10^-6));%hz
+    
+    if(~flag_freq_workspace)
+        freq=floor(1/((pWidth1(idx)+pWidth2(idx) + interphase(idx) +interpulse(idx))*10^-6));%hz
+    end
+    
     stimObj.setStimPattern('waveform',patternCounter,...
                             'polarity',polarities(idx),... % 0 = cathodic first
                             'pulses',nPulses,...
@@ -163,7 +173,7 @@ for j=1:maxChannels
     %    x=stimObj.getSequenceStatus();
         stimObj.manualStim(chanSent,waveSent)
 
-        pause(1/nomFreq+rand/10);%wait a bit to get different timings relative to cerebus clock
+        pause(1/nomFreq);%+rand/10);%wait a bit to get different timings relative to cerebus clock
         
     end
     
