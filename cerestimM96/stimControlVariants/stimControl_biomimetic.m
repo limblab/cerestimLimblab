@@ -1,73 +1,21 @@
 %Script to stimulate based on words received on the cerebus digital input
-%lines. User must configure the script with a cell array of electrode
-%numbers. the code of the stim word selects which electrode(/s) is stimulated.
-%user must configure an array of amplitudes. Script will select stimulation
-%amplitude based on stim code recieved. number of amplitudes, and number of
-%electrode groups must match.
-%elaboration: this code can accomplish stimulation with same amplitude on
-%multiple electrodes by repeating the electrode definition for each
-%amplitude. The code can accomplish stimulatin on multiple electrodes with
-%same amplitude by repeating the amplitude definition.
-%
-%User must also configure pulse parameters
-%script setup- 
-%general setup:
+%lines. 
+%% this script assumes that wave_mappings and freq_all already exists
+% wave_mappings is a cell array that contains information for each pattern.
+% Each cell contains a different pattern. This is stored as an array of 
+% (chan_num, wave_freq_norm, wave_num). The code below builds 15 waveforms
+% (cerestim limit) and then uses the mappings in wave_mappings to deliver
+% the stimuli on the channels in chan_num. This code currently handles up
+% to 16 channels. 
+% freq_all_norm is a 15x1 array containing the normalized frequencies for each waveform.
 
-%%configure stim parameters
-chan_num_all = chan_num;
 max_freq = 330;
-num_elec = 16:8:32;
-
-chan_num = {};
-wave_freq = {};
-
-[freq_all_norm] = unique(biomimetic_freq_norm);
-freq_all_norm(freq_all_norm == 0) = [];
 freq_all = freq_all_norm*max_freq;
-
-freq_all(freq_all < 16) = 16;
-
-chan_num{3} = chan_num_all;
-wave_freq{3} = biomimetic_freq_norm;
-
-keep_idx_24 = [randperm(16,12), randperm(16,12) + 16];
-chan_num{2} = chan_num_all(keep_idx_24);
-wave_freq{2} = biomimetic_freq_norm(keep_idx_24);
-keep_idx_16 = [randperm(12,8), randperm(12,8) + 8];
-chan_num{1} = chan_num{2}(keep_idx_16);
-wave_freq{1} = biomimetic_freq_norm(keep_idx_16);
-
-%%
-wave_mappings = {};
-
-for num_elec_idx = 1:3
-    for bio = 1:2
-        wave_mappings{end+1} = zeros(num_elec(num_elec_idx)/2,3); % chan_num, wave_freq, wave_num
-
-        if(bio == 1) % biomimetic
-            chan_ = chan_num{num_elec_idx}(1:num_elec(num_elec_idx)/2);
-            freq_ = wave_freq{num_elec_idx}(1:num_elec(num_elec_idx)/2);
-            for freq_idx = 1:numel(freq_)
-                freq_all_idx = find(freq_(freq_idx) == freq_all_norm);
-                wave_mappings{end}(freq_idx,2) = freq_all(freq_all_idx);
-                wave_mappings{end}(freq_idx,3) = freq_all_idx;
-                wave_mappings{end}(freq_idx,1) = chan_(freq_idx);
-            end
-            
-        else % nonbiomimetic
-            wave_mappings{end}(:,1) = chan_num{num_elec_idx}(randperm(num_elec(num_elec_idx),num_elec(num_elec_idx)/2))';
-            wave_mappings{end}(:,2:3) = wave_mappings{end-1}(:,2:3);
-        end
-    end
-end
-
-%%
 
 usingStimSwitchToRecord = 0;
 
 stimAmp=20;%different amplitudes of stimulation
 pulseWidth=200;%time for each phase of a pulse in uS
-max_freq = 330; % Hz
 trainLength=0.12;%length of the pulse train in s
 interpulse = 250;
 
