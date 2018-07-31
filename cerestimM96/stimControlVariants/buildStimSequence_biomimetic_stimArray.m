@@ -1,23 +1,14 @@
 %Script to stimulate based on words received on the cerebus digital input
 %lines. 
-%% this script assumes that wave_mappings and freq_all already exists
-% wave_mappings is a cell array that contains information for each pattern.
-% Each cell contains a different pattern. This is stored as an array of 
-% (chan_num, wave_freq_norm, wave_num). The code below builds 15 waveforms
-% (cerestim limit) and then uses the mappings in wave_mappings to deliver
-% the stimuli on the channels in chan_num. This code currently handles up
-% to 16 channels. 
-% freq_all_norm is a 15x1 array containing the normalized frequencies for each waveform.
-
-max_freq = 330;
-freq_all = input_data.freq_all_norm*max_freq;
-
-usingStimSwitchToRecord = 0;
-
+%% this script assumes that stim_array exists, an array of 1's and 0's indicating \
+% which channel to stimulate with at a given time
+for i = 1:numel(stim_array)
+    stim_array{i}.stim_pattern = squeeze(stim_array{i}.stim_pattern);
+end
 stimAmp=20;%different amplitudes of stimulation
 pulseWidth=200;%time for each phase of a pulse in uS
 trainLength=0.12;%length of the pulse train in s
-interpulse = 250;
+interpulse = 53;
 
 stimDelay=0;%0.115;%delays start of stim train to coincide with middle of force rise
 % configure cbmex parameters:
@@ -62,19 +53,17 @@ try
         %configure waveform:
         
 %     disp(['setting stim pattern; ',num2str(i)])
-    for i = 1:15
-        freq = ceil(freq_all(i));
-        numPulses=ceil(freq*trainLength);
-        stimObj.setStimPattern('waveform',i,...
-                                'polarity',0,...
-                                'pulses',numPulses,...
-                                'amp1',stimAmp,...
-                                'amp2',stimAmp,...
-                                'width1',pulseWidth,...
-                                'width2',pulseWidth,...
-                                'interphase',53,...
-                                'frequency',freq);
-    end
+    numPulses = 1;
+    
+    stimObj.setStimPattern('waveform',1,...
+                            'polarity',0,...
+                            'pulses',numPulses,...
+                            'amp1',stimAmp,...
+                            'amp2',stimAmp,...
+                            'width1',pulseWidth,...
+                            'width2',pulseWidth,...
+                            'interphase',53,...
+                            'frequency',nomFreq);
     
     h=msgbox('Central Connection is open: stimulation is running','CBmex-notifier');
     btnh=findobj(h,'style','pushbutton');
@@ -140,7 +129,7 @@ try
             stimCode=words(idx(1))-stimWord+1;
             disp(['stimulating with code: ',num2str(stimCode)])
                 
-            if stimCode>numel(wave_mappings) || stimCode<1
+            if stimCode>numel(stim_array) || stimCode<1
                 warning('managed to get a bad stimcode, cant assign electrode group')
                 continue
             end
@@ -149,13 +138,9 @@ try
         end
         %if we got here, then we found a stim word. use the code to issue a
         %stim command:
-        tic
+
         % if using stim switch to record
-        if(usingStimSwitchToRecord)
-            buildStimSequence_biomimetic(stimObj,wave_mappings{stimCode},1000/max_freq); % wait takes in milliseconds
-        else
-            buildStimSequence_biomimetic(stimObj,wave_mappings{stimCode},10); % wait takes in milliseconds
-        end
+        useStimArrayToStimulate(stimObj,stim_array{stimCode}); % wait takes in milliseconds
         
         pause(stimDelay-toc);
         stimObj.play(1)

@@ -3,26 +3,24 @@
 
 pulseWidthList=[...
                 200,200;...
-                200,200;...
                 ];
             
 pulseAmpList=[  ...
-                20,20;
-                100,100;...
+                1,1;...
                 ];
             
 
-interpulseList = [53,];
+interpulseList = [20000];
 % interpulseList = 53;
-prefix='Saline_array_20180712_dukeProjBox_chan92con_';
-folder='C:\data\Testing\Saline_dukeProjBox_20180712\';
+prefix='testing';
+folder='C:\data\Han\testing\';
 
-chanList = 96;
+chanList = 1;
 interphase=53;
 nPulses=1;
 
 nomFreq=5;
-nTests=5;
+nTests=500;
 
 for m=1:numel(interpulseList)
     for j=1:size(pulseAmpList,1)
