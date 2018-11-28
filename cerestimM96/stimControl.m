@@ -10,7 +10,7 @@
 %same amplitude by repeating the amplitude definition.
 %
 %User must also configure pulse parameters
-clear all
+% clear all
 %script setup- 
 %general setup:
 
@@ -18,18 +18,21 @@ clear all
 
 usingStimSwitchToRecord = 0;
 
-electrodeList{1} = [30];
-electrodeList{2} = [51]; 
-electrodeList{3}=[51,30];
-electrodeList{4}=[67    40    63    51    30];
-electrodeList{5}=[30    25    56    51    60];
-electrodeList{6}=[30    51    16    56    25    60    63    67    40     8];
+% for i = 1:numel(chan_list_2)
+%     electrodeList{i} = chan_list_2(i);
+% end
 
-stimAmp=[100,100,50,20,20,10];%different amplitudes of stimulation
+electrodeList{1} = [17,75,90,45,31,32,40,83];
+
+
+
+
+stimAmp=[100];%different amplitudes of stimulation
 pulseWidth=200;%time for each phase of a pulse in uS
 freq = 330; % Hz
 trainLength=0.12;%length of the pulse train in s
 interpulse = 53;
+
 numPulses=freq*trainLength;
 stimDelay=0;%0.115;%delays start of stim train to coincide with middle of force rise
 % configure cbmex parameters:
@@ -85,17 +88,15 @@ try
                             'interphase',53,...
                             'frequency',nomFreq);
     else
-        for i = 1:numel(stimAmp)
-            stimObj.setStimPattern('waveform',i,...
-                                    'polarity',0,...
-                                    'pulses',numPulses,...
-                                    'amp1',stimAmp(i),...
-                                    'amp2',stimAmp(i),...
-                                    'width1',pulseWidth,...
-                                    'width2',pulseWidth,...
-                                    'interphase',53,...
-                                    'frequency',freq);
-        end
+        stimObj.setStimPattern('waveform',1,...
+                                'polarity',0,...
+                                'pulses',numPulses,...
+                                'amp1',stimAmp,...
+                                'amp2',stimAmp,...
+                                'width1',pulseWidth,...
+                                'width2',pulseWidth,...
+                                'interphase',53,...
+                                'frequency',freq);
     end
     
     h=msgbox('Central Connection is open: stimulation is running','CBmex-notifier');
@@ -166,7 +167,7 @@ try
                 warning('managed to get a bad stimcode, cant assign electrode group')
                 continue
             end
-            EL=electrodeList{stimCode};
+            EL=electrodeList{stimCode}
             %and re-set the stimStart variable
             stimStart=toc(sessionTimer);
         end
@@ -177,7 +178,7 @@ try
         if(usingStimSwitchToRecord)
             buildStimSequence(stimObj,EL,repmat(stimCode,numPulses,1),1000/freq); % wait takes in milliseconds
         else
-            buildStimSequence(stimObj,EL,stimCode,10); % wait takes in milliseconds
+            buildStimSequence(stimObj,EL,1,10); % wait takes in milliseconds
         end
         
         pause(stimDelay-toc);

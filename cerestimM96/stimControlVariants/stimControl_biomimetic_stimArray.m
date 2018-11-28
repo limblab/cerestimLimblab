@@ -1,37 +1,17 @@
 %Script to stimulate based on words received on the cerebus digital input
-%lines. User must configure the script with a cell array of electrode
-%numbers. the code of the stim word selects which electrode(/s) is stimulated.
-%user must configure an array of amplitudes. Script will select stimulation
-%amplitude based on stim code recieved. number of amplitudes, and number of
-%electrode groups must match.
-%elaboration: this code can accomplish stimulation with same amplitude on
-%multiple electrodes by repeating the electrode definition for each
-%amplitude. The code can accomplish stimulatin on multiple electrodes with
-%same amplitude by repeating the amplitude definition.
-%
-%User must also configure pulse parameters
-%script setup- 
-%general setup:
-
-%configure stim parameters
-
-usingStimSwitchToRecord = 0;
-
-stimAmps=[80];%different amplitudes of stimulation, this is per electrode
-
-for i = 1:numel(stimAmps)
-    electrodeList{i} = [22,32,45,89,59];
+%lines. 
+%% this script assumes that stim_array exists, an array of 1's and 0's indicating \
+% which channel to stimulate with at a given time
+for i = 1:numel(stim_array)
+    stim_array{i}.stim_pattern = squeeze(stim_array{i}.stim_pattern);
 end
-% electrodeList{2}=[1];
-% electrodeList{3}=[2];
-% electrodeList{4}=[22];
-% electrodeList{5}=[62];
+
+stimAmp=10;%different amplitudes of stimulation
 pulseWidth=200;%time for each phase of a pulse in uS
-freq = 330; % Hz
-trainLength=0.12;%length of the pulse train in s
+trainLength=0.3;%length of the pulse train in s
 interpulse = 53;
-numPulses=freq*trainLength;
-stimDelay=0;%0.115;%delays start of stim train to coincide with middle of force rise
+
+stimDelay=0.025;%0.115;%delays start of stim train to coincide with middle of force rise
 % configure cbmex parameters:
 stimWord=hex2dec('60');
 DBMask=hex2dec('f0');
@@ -42,6 +22,7 @@ chan=151;%digital input is CH151
 nomFreq = floor(1/((pulseWidth*2+53+interpulse)*10^-6));
 
 %initialize timer variables
+tic;
 sessionTimer=tic;
 stimStart=0;
 
@@ -71,32 +52,21 @@ try
     end
 
     %establish stimulation waveforms for each stimulation amplitude:
-    for i=1:numel(stimAmps)
         %configure waveform:
-        disp(['setting stim pattern; ',num2str(i)])
-        if(usingStimSwitchToRecord)
-            stimObj.setStimPattern('waveform',i,...
-                                'polarity',0,...
-                                'pulses',1,...
-                                'amp1',stimAmps(i),...
-                                'amp2',stimAmps(i),...
-                                'width1',pulseWidth,...
-                                'width2',pulseWidth,...
-                                'interphase',53,...
-                                'frequency',nomFreq);
-        else
-            stimObj.setStimPattern('waveform',i,...
-                                    'polarity',0,...
-                                    'pulses',numPulses,...
-                                    'amp1',stimAmps(i),...
-                                    'amp2',stimAmps(i),...
-                                    'width1',pulseWidth,...
-                                    'width2',pulseWidth,...
-                                    'interphase',53,...
-                                    'frequency',freq);
-        end
         
-    end
+%     disp(['setting stim pattern; ',num2str(i)])
+    numPulses = 1;
+    
+    stimObj.setStimPattern('waveform',1,...
+                            'polarity',0,...
+                            'pulses',numPulses,...
+                            'amp1',stimAmp,...
+                            'amp2',stimAmp,...
+                            'width1',pulseWidth,...
+                            'width2',pulseWidth,...
+                            'interphase',53,...
+                            'frequency',nomFreq);
+    
     h=msgbox('Central Connection is open: stimulation is running','CBmex-notifier');
     btnh=findobj(h,'style','pushbutton');
     set(btnh,'String','Close Connection');
@@ -161,23 +131,18 @@ try
             stimCode=words(idx(1))-stimWord+1;
             disp(['stimulating with code: ',num2str(stimCode)])
                 
-            if stimCode>numel(electrodeList) || stimCode<1
+            if stimCode>numel(stim_array) || stimCode<1
                 warning('managed to get a bad stimcode, cant assign electrode group')
                 continue
             end
-            EL=electrodeList{stimCode};
             %and re-set the stimStart variable
             stimStart=toc(sessionTimer);
         end
         %if we got here, then we found a stim word. use the code to issue a
         %stim command:
-        tic
+
         % if using stim switch to record
-        if(usingStimSwitchToRecord)
-            buildStimSequence(stimObj,EL,repmat(stimCode,numPulses,1),1000/freq); % wait takes in milliseconds
-        else
-            buildStimSequence(stimObj,EL,stimCode,10); % wait takes in milliseconds
-        end
+        useStimArrayToStimulate(stimObj,stim_array{stimCode}); % wait takes in milliseconds
         
         pause(stimDelay-toc);
         stimObj.play(1)

@@ -27,31 +27,30 @@
 
 
 %% Chips 1
-for mm = 1:20
+for mm = 1
     disp(['stimulation iteration: ',num2str(mm)])
     clear;
 
-    folder='C:\data\Han\Han_20180720\';
-    prefix='Han_20180720_'; % no underscore after prefix please
+    folder='C:\data\Han\Han_20181126_stimRec\';
+    prefix='Han_20181126_FC'; % no underscore after prefix please
     
     % all parameters need to be the same size matrix
-    amp1=[50];%in uA
+    amp1=[40];%in uA
     pWidth1=[200];%in us
-    amp2=[50];%in uA
+    amp2=[40];%in uA
     pWidth2=[200];%in us
     
     interphase=[53];
-    interpulse=[300];
+    interpulse=[53];
     polarities = [0]; % 0 = cathodic first
    
-    
     nPulses=1; % pulses per train
 %     freq=200; %frequency of the trains. This may be overridden in runStimAnd Record
 
     nomFreq=10; %how frequently we deliver a train, if trains are single pulse, this is the stim frequency
-    nTests=2000; % # of trains
+    nTests=900; % # of trains
 
-    chanList=[3:3:96]; % pick some channels
+    chanList={55,58,[55,58]}; % pick some channels
 
     arg = {'interleaveChanList',1};
     saveImpedance=0;

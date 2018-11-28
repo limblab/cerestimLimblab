@@ -16,11 +16,11 @@ clear all
 
 %configure stim parameters
 
-usingStimSwitchToRecord = 1;
+usingStimSwitchToRecord = 0;
 
 trainLengths=[0.025,0.05,0.075,0.1,0.125,0.15,0.2,0.25,0.3];%different train lengths of stimulation
 for i = 1:numel(trainLengths)
-    electrodeList{i} = [11];
+    electrodeList{i} = [62];
 end
 % electrodeList{2}=[1];
 % electrodeList{3}=[2];

@@ -90,7 +90,7 @@ for idx = 1:numel(amp1)
                             'interphase',interphase(idx),...
                             'frequency',freq);
 
-    waveforms.parameters(patternCounter).polarity = 0; % 0 is cathodic first, look at matlab api
+    waveforms.parameters(patternCounter).polarity = polarities(idx); % 0 is cathodic first, look at matlab api
     waveforms.parameters(patternCounter).amp1 = amp1(idx);
     waveforms.parameters(patternCounter).amp2 = amp1(idx);
     waveforms.parameters(patternCounter).pWidth1 = pWidth1(idx);
@@ -122,7 +122,7 @@ end
 
 for j=1:maxChannels
     if(~interleaveChanList)
-        disp(['working on chan: ',num2str(chanList(j))])
+        disp(['working on chan: ',num2str(chanList{j})])
     end
 
     endNumber = 1;
@@ -130,11 +130,11 @@ for j=1:maxChannels
     if(interleaveChanList && ~interleaveAmplitude)
         fName=[folder,prefix,'_chanINTERLEAVEDstim_A1-',num2str(amp1),'_',num2str(endNumber)];%'_A2-',num2str(amp2),'_PW1-',num2str(pWidth1),'_PW2-',num2str(pWidth2),'_interpulse-',num2str(interpulse),'_',num2str(endNumber)];
     elseif(~interleaveChanList && interleaveAmplitude)
-        fName=[folder,prefix,'_chan',num2str(chanList(j)),'stim_A1-INTERLEAVED_A2-INTERLEAVED','_',num2str(endNumber)];%num2str(pWidth1),'_PW2-',num2str(pWidth2),'_interpulse-',num2str(interpulse),'_',num2str(endNumber)];        
+        fName=[folder,prefix,'_chan',num2str(chanList{j}),'stim_A1-INTERLEAVED_A2-INTERLEAVED','_',num2str(endNumber)];%num2str(pWidth1),'_PW2-',num2str(pWidth2),'_interpulse-',num2str(interpulse),'_',num2str(endNumber)];        
     elseif(interleaveChanList && interleaveAmplitude)
         fName=[folder,prefix,'_chanINTERLEAVEDstim_A1-INTERLEAVED_A2-INTERLEAVED','_',num2str(endNumber)];%num2str(pWidth1),'_PW2-',num2str(pWidth2),'_interpulse-',num2str(interpulse),'_',num2str(endNumber)];        
     else % no interleaving
-        fName=[folder,prefix,'_chan',num2str(chanList(j)),'stim_A1-',num2str(amp1),'_',num2str(endNumber)];%'_A2-',num2str(amp2),'_PW1-',num2str(pWidth1),'_PW2-',num2str(pWidth2),'_interpulse-',num2str(interpulse),'_',num2str(endNumber)];        
+        fName=[folder,prefix,'_chan',num2str(chanList{j}),'stim_A1-',num2str(amp1),'_',num2str(endNumber)];%'_A2-',num2str(amp2),'_PW1-',num2str(pWidth1),'_PW2-',num2str(pWidth2),'_interpulse-',num2str(interpulse),'_',num2str(endNumber)];        
     end
         
     while exist(strcat(fName,'.nev')) > 0
@@ -142,11 +142,11 @@ for j=1:maxChannels
         if(interleaveChanList && ~interleaveAmplitude)
             fName=[folder,prefix,'_chanINTERLEAVEDstim_A1-',num2str(amp1),'_',num2str(endNumber)];%'_A2-',num2str(amp2),'_PW1-',num2str(pWidth1),'_PW2-',num2str(pWidth2),'_interpulse-',num2str(interpulse),'_',num2str(endNumber)];
         elseif(~interleaveChanList && interleaveAmplitude)
-            fName=[folder,prefix,'_chan',num2str(chanList(j)),'stim_A1-INTERLEAVED_A2-INTERLEAVED','_',num2str(endNumber)];%num2str(pWidth1),'_PW2-',num2str(pWidth2),'_interpulse-',num2str(interpulse),'_',num2str(endNumber)];        
+            fName=[folder,prefix,'_chan',num2str(chanList{j}),'stim_A1-INTERLEAVED_A2-INTERLEAVED','_',num2str(endNumber)];%num2str(pWidth1),'_PW2-',num2str(pWidth2),'_interpulse-',num2str(interpulse),'_',num2str(endNumber)];        
         elseif(interleaveChanList && interleaveAmplitude)
             fName=[folder,prefix,'_chanINTERLEAVEDstim_A1-INTERLEAVED_A2-INTERLEAVED','_',num2str(endNumber)];%num2str(pWidth1),'_PW2-',num2str(pWidth2),'_interpulse-',num2str(interpulse),'_',num2str(endNumber)];        
         else % no interleaving
-            fName=[folder,prefix,'_chan',num2str(chanList(j)),'stim_A1-',num2str(amp1),'_',num2str(endNumber)];%'_A2-',num2str(amp2),'_PW1-',num2str(pWidth1),'_PW2-',num2str(pWidth2),'_interpulse-',num2str(interpulse),'_',num2str(endNumber)];        
+            fName=[folder,prefix,'_chan',num2str(chanList{j}),'stim_A1-',num2str(amp1),'_',num2str(endNumber)];%'_A2-',num2str(amp2),'_PW1-',num2str(pWidth1),'_PW2-',num2str(pWidth2),'_interpulse-',num2str(interpulse),'_',num2str(endNumber)];        
         end
     end
     [~,fstr,ext]=fileparts(fName);
@@ -169,7 +169,7 @@ for j=1:maxChannels
     pause(10)
     %% deliver our stimuli:
     waveforms.waveSent = [];
-    waveforms.chanSent = [];
+    waveforms.chanSent = {};
     
     for i=1:nTests
         if(interleaveAmplitude)
@@ -180,15 +180,22 @@ for j=1:maxChannels
             waveforms.waveSent(end+1,1) = 1;
         end
         if(interleaveChanList)
-            chanSent = chanList(ceil(rand()*numel(chanList)));
-            waveforms.chanSent(end+1,1) = chanSent;
+            chanSent = chanList{ceil(rand()*numel(chanList))};
+            waveforms.chanSent{end+1,1} = chanSent;
         else
-            chanSent = chanList(j);
-            waveforms.chanSent(end+1,1) = chanList(j);
+            chanSent = chanList{j};
+            waveforms.chanSent{end+1,1} = chanList{j};
         end
-    %    x=stimObj.getSequenceStatus();
-        stimObj.manualStim(chanSent,waveSent)
-
+    %    x=stimObj.getSequenceStatus(); 
+        stimObj.beginSequence();
+        stimObj.beginGroup();
+        for chan_idx = 1:numel(chanSent)
+            stimObj.autoStim(chanSent(chan_idx),waveSent)
+        end
+        stimObj.endGroup();
+        stimObj.endSequence();
+        stimObj.play(1);
+        
         pause(1/nomFreq);%+rand/10);%wait a bit to get different timings relative to cerebus clock
         
     end
