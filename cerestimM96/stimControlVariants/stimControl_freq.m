@@ -16,19 +16,20 @@ clear all
 
 %configure stim parameters
 
-usingStimSwitchToRecord = 1;
+usingStimSwitchToRecord = 0;
 
 freq=[50,100,150,200,250,300,350,400,450,500];%200;%frequency of pulses in Hz
+
 for i = 1:numel(freq)
-    electrodeList{i} = [63];
+    electrodeList{i} = [56];
 end
 % electrodeList{2}=[1];
 % electrodeList{3}=[2];
 % electrodeList{4}=[22];
 % electrodeList{5}=[62];
 pulseWidth=200;%time for each phase of a pulse in uS
-stimAmps = 60;
-trainLength=0.12;%length of the pulse train in s
+stimAmps = 100;
+trainLength=0.2;%length of the pulse train in s
 interpulse = 250;
 numPulses=freq*trainLength;
 stimDelay=0;%0.115;%delays start of stim train to coincide with middle of force rise

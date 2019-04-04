@@ -125,19 +125,19 @@ pause(2)
 
 
 %%
-% if ~exist('stimObj','var')
-%     stimObj=cerestim96;
-%     stimObj.connect();
-% elseif ~stimObj.isConnected();
-%     stimObj.connect();
-% end
-% if ~stimObj.isConnected();
-%     error('testStim:noStimulator','could not establish connection to stimulator')
-% end
-% imp = [];
-%     imp = stimObj.testElectrodes();
-%     pause(0.01)
-% 
-% stimObj.disconnect();
-% stimObj.delete()
-% clear stimObj
+if ~exist('stimObj','var')
+    stimObj=cerestim96;
+    stimObj.connect();
+elseif ~stimObj.isConnected();
+    stimObj.connect();
+end
+if ~stimObj.isConnected();
+    error('testStim:noStimulator','could not establish connection to stimulator')
+end
+imp = [];
+    imp = stimObj.testElectrodes();
+    pause(0.01)
+
+stimObj.disconnect();
+stimObj.delete()
+clear stimObj

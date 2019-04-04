@@ -485,9 +485,9 @@ classdef cerestim96 < handle
                     end
                 case 'cerestim96'
                     if nargout
-                        [x] = stim100mex('enablemodule', this.objectHandle, varargin{:});
+                        [x] = stimmex('enablemodule', this.objectHandle, varargin{:});
                     else
-                        stim100mex('enablemodule', this.objectHandle, varargin{:});
+                        stimmex('enablemodule', this.objectHandle, varargin{:});
                     end
             end
         end 

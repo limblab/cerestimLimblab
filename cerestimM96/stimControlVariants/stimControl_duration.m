@@ -18,9 +18,9 @@ clear all
 
 usingStimSwitchToRecord = 0;
 
-trainLengths=[0.025,0.05,0.075,0.1,0.125,0.15,0.2,0.25,0.3];%different train lengths of stimulation
+trainLengths=[0.025,0.05,0.075,0.1,0.125,0.15,0.175,0.2,0.25,0.3];%different train lengths of stimulation
 for i = 1:numel(trainLengths)
-    electrodeList{i} = [62];
+    electrodeList{i} = [56]; % 56
 end
 % electrodeList{2}=[1];
 % electrodeList{3}=[2];

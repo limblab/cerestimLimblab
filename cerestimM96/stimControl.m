@@ -11,6 +11,7 @@
 %
 %User must also configure pulse parameters
 % clear all
+
 %script setup- 
 %general setup:
 
@@ -22,15 +23,29 @@ usingStimSwitchToRecord = 0;
 %     electrodeList{i} = chan_list_2(i);
 % end
 
-electrodeList{1} = [17,75,90,45,31,32,40,83];
-
-
+% electrodeList{1} = [17,75,90,45,31,32,40,83];
+electrodeList{1} = [43];
+electrodeList{2} = [77];
+electrodeList{3} = [6];
+electrodeList{4} = [79];
+electrodeList{5} = [42];
+electrodeList{6} = [10];
+electrodeList{7} = [78];
+electrodeList{8} = [39];
+electrodeList{9} = [53];
+electrodeList{10} = [93];
+electrodeList{11} = [70];
+electrodeList{12} = [54];
+electrodeList{13} = [66];
+electrodeList{14} = [50];
+electrodeList{15} = [71];
+electrodeList{16} = [75];
 
 
 stimAmp=[100];%different amplitudes of stimulation
 pulseWidth=200;%time for each phase of a pulse in uS
 freq = 330; % Hz
-trainLength=0.12;%length of the pulse train in s
+trainLength=0.2;%length of the pulse train in s
 interpulse = 53;
 
 numPulses=freq*trainLength;

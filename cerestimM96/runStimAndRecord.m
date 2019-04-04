@@ -52,6 +52,7 @@ end
 if ~exist('stimObj','var')
     stimObj=cerestim96;
     stimObj.connect();
+%     stimObj.enableModule([2:1:16]);
 elseif ~stimObj.isConnected();
     stimObj.connect();
 end
@@ -76,28 +77,29 @@ end
 % generate waveforms
 for idx = 1:numel(amp1)
     
-    if(~flag_freq_workspace)
-        freq=floor(1/((pWidth1(idx)+pWidth2(idx) + interphase(idx) +interpulse(idx))*10^-6));%hz
+    if(~flag_freq_workspace || freq(idx) < 0)
+        freq(idx)=floor(1/((pWidth1(idx)+pWidth2(idx) + interphase(idx) +interpulse(idx))*10^-6));%hz
     end
     
     stimObj.setStimPattern('waveform',patternCounter,...
                             'polarity',polarities(idx),... % 0 = cathodic first
-                            'pulses',nPulses,...
+                            'pulses',nPulses(idx),...
                             'amp1',amp1(idx),...
                             'amp2',amp2(idx),...
                             'width1',pWidth1(idx),...
                             'width2',pWidth2(idx),...
                             'interphase',interphase(idx),...
-                            'frequency',freq);
+                            'frequency',freq(idx));
 
     waveforms.parameters(patternCounter).polarity = polarities(idx); % 0 is cathodic first, look at matlab api
     waveforms.parameters(patternCounter).amp1 = amp1(idx);
-    waveforms.parameters(patternCounter).amp2 = amp1(idx);
+    waveforms.parameters(patternCounter).amp2 = amp2(idx);
     waveforms.parameters(patternCounter).pWidth1 = pWidth1(idx);
     waveforms.parameters(patternCounter).pWidth2 = pWidth2(idx);
     waveforms.parameters(patternCounter).interphase = interphase(idx);
-    waveforms.parameters(patternCounter).freq = freq;
+    waveforms.parameters(patternCounter).freq = freq(idx);
     waveforms.parameters(patternCounter).interpulse = interpulse(idx);
+    waveforms.parameters(patternCounter).nPulses = nPulses(idx);
 
     patternCounter = patternCounter + 1;
     
@@ -193,6 +195,7 @@ for j=1:maxChannels
             stimObj.autoStim(chanSent(chan_idx),waveSent)
         end
         stimObj.endGroup();
+        
         stimObj.endSequence();
         stimObj.play(1);
         

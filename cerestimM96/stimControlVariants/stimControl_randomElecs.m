@@ -18,7 +18,7 @@
 
 usingStimSwitchToRecord = 1; % set if doing a crazy number of electrodes as well, maximum w/ 24 elecs is 250Hz
 
-master_electrode_list = [chan_list_all];
+master_electrode_list = [chans_to_use];
 EL_all = {};
 stim_code_all = [];
 % electrodeList{2}=[1];
@@ -26,8 +26,9 @@ stim_code_all = [];
 % electrodeList{4}=[22];
 % electrodeList{5}=[62];
 
-stimAmps = [60,90,120,40,60,80,30,45,60,20,30,40,10,15,20];
+stimAmps = [60,80,120,40,60,80,30,45,60,20,30,40,10,15,20];
 numElecs = [4,4,4,6,6,6,8,8,8,12,12,12,24,24,24];
+asymmetric_required_flag = any(numElecs > 16);
 
 pulseWidth=200;%time for each phase of a pulse in uS
 freq = 330; % Hz
@@ -185,15 +186,17 @@ try
         tic
         % if using stim switch to record
         if(usingStimSwitchToRecord)
-            if(numel(EL > 16))
-                numGroups = ceil(numel(EL)/16);
+            if(asymmetric_required_flag)
+                numGroups = ceil(max(numElecs)/16);
+                
                 EL_lists = {};
                 for elGroup = 1:numGroups
                     if(elGroup == numGroups)
-                        EL_lists{elGroup} = EL((elGroup-1)*16 + 1:end);
+                        EL_lists{elGroup} = EL((elGroup-1)*floor(numel(EL)/numGroups) + 1:end);
                     else
-                        EL_lists{elGroup} = EL((elGroup-1)*16 + 1:(elGroup)*16);
+                        EL_lists{elGroup} = EL((elGroup-1)*floor(numel(EL)/numGroups) + 1:(elGroup)*floor(numel(EL)/numGroups));
                     end
+                    disp(EL_lists{elGroup})
                 end
                 if(1000/freq - numGroups*(2*pulseWidth + interphase + interpulse + correctionFactor)*1E-3 < 0)
                     error('too high of a frequency given the pulse widths');
@@ -201,11 +204,11 @@ try
                 buildStimSequence_manyChannels(stimObj,EL_lists,stimCode,1000/freq - numGroups*(2*pulseWidth + interphase + interpulse + correctionFactor)*1E-3);
                 numPlays = numPulses;
             else
-                buildStimSequence(stimObj,EL,repmat(stimCode,numPulses,1),1000/freq); % wait takes in milliseconds
-                numPlays = 1;
+                buildStimSequence(stimObj,EL,stimCode,1000/freq - (2*pulseWidth + interphase + interpulse + correctionFactor)*1E-3); % wait takes in milliseconds
+                numPlays = numPulses;
             end
         else
-            if(numel(EL > 16))
+            if(numel(EL) > 16)
                 error('Not stimulating as the stimulator is not setup for this, set the usingStimSwitchToRecord flag to 1');
             else
                 buildStimSequence(stimObj,EL,stimCode,10); % wait takes in milliseconds

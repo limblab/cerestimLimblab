@@ -24,23 +24,23 @@
 %nTests         :   number of times the script will issue a cathodal/anodal
 %                       stim pair
 %doublePulseLatency  : time in ms between the double pulses
-amp1 = 40;
-amp2 = 40;
+amp1 = 50;
+amp2 = 50;
 pWidth1 = 200;
 pWidth2 = 200;
 interpulse = 53;
-interphase = 300;
-
-doublePulseLatency = 30; % lets do 2, 4, 6 ,8, 10, 20, 30 % in ms
+interphase = 53;
+pol = 0; % 0 is cathodic first
+doublePulseLatency = [-1,10,20,200]; % -1 = single pulse
 
 nPulses = 1;
-nomFreq = 5;
-nTests = 100;
+nomFreq = 2;
+nTests = 200;
+num_files = 4;
+chanList = [56]; % 
 
-chanList =[9 14 20 25 27 29 31 32]; % 
-
-prefix=['Han_stimswitchFastsettle_dpl',num2str(doublePulseLatency)];
-folder='C:\data\stimTesting\Han_20180409_doublePulse\';
+prefix=['Han_20190304_chan56dukeProjBox_dplExp'];
+folder='C:\data\Han\Han_20190304_doublePulse\';
 
 %configure params
 freq=floor(1/((pWidth1+pWidth2+interphase+interpulse)*10^-6));%hz
@@ -56,7 +56,7 @@ if ~stimObj.isConnected();
 end
 
 stimObj.setStimPattern('waveform',1,...
-                        'polarity',0,...
+                        'polarity',pol,...
                         'pulses',nPulses,...
                         'amp1',amp1,...
                         'amp2',amp2,...
@@ -64,52 +64,46 @@ stimObj.setStimPattern('waveform',1,...
                         'width2',pWidth2,...
                         'interphase',interphase,...
                         'frequency',freq);
- stimObj.setStimPattern('waveform',2,...
-                        'polarity',1,...
-                        'pulses',nPulses,...
-                        'amp1',amp1,...
-                        'amp2',amp2,...
-                        'width1',pWidth1,...
-                        'width2',pWidth2,...
-                        'interphase',interphase,...
-                        'frequency',freq);   
+
 
 %establish cerebus connection
 initializeCerebus();
 %loop through channels and log a test file for each one:
-for j=1:numel(chanList)
-    disp(['working on chan: ',num2str(chanList(j))])
-    fName=startcerebusStimRecording(chanList(j),amp1,amp2,pWidth1,pWidth2,interpulse,j,folder,prefix);
-    % build stim sequence
-    stimObj.beginSequence()
-    for i=1:2 % cathodal then anodal
-        stimObj.beginGroup()
-        % stimulate once on all channels
-        for k=1:numel(chanList)
-            stimObj.autoStim(chanList(k),i)
+for j=1:num_files
+    disp(['working on chan: ',num2str(chanList)])
+    fName=startcerebusStimRecording(chanList,amp1,amp2,pWidth1,pWidth2,interpulse,j,folder,prefix,pol);
+    for trial = 1:nTests
+        dpl_idx = ceil(rand()*numel(doublePulseLatency));
+        if(doublePulseLatency(dpl_idx) <= 0)
+            num_pulses = 1;
+        else
+            num_pulses = 2;
         end
-        stimObj.endGroup()
-        % pause for doublePulseLatency
-        stimObj.wait(doublePulseLatency)
-        % stimulate again on all channels
-        stimObj.beginGroup()
-        for k=1:numel(chanList)
-            stimObj.autoStim(chanList(k),i)
+        
+        % build stim sequence
+        stimObj.beginSequence()
+        for i=1:num_pulses % cathodal then anodal
+            stimObj.beginGroup()
+            % stimulate once on all channels
+            for k=1:numel(chanList)
+                stimObj.autoStim(chanList(k),1) % only use waveform 1
+            end
+            stimObj.endGroup()
+            % pause for doublePulseLatency
+            if(i ~= num_pulses)
+                stimObj.wait(doublePulseLatency(dpl_idx))
+            end
+            % wait the nominal frequency
         end
-        stimObj.endGroup()
-        % wait the nominal frequency
-        stimObj.wait(1000/nomFreq - doublePulseLatency + rand()*20) % I think
+        stimObj.endSequence()
+
+        % deliver our stimuli
+        stimObj.play(1);
+        pause(1/nomFreq + 0.01) % pause for longer than needed just in case timing is off
+        % tell cerestim to stop stimulating (it should be done, but to prevent
+        % errors)
+        stimObj.stop();
     end
-    stimObj.endSequence()
-    
-    % deliver our stimuli
-    stimObj.play(nTests);
-    pause(2*(nTests+3)/nomFreq + 2*(nTests+3)*doublePulseLatency/1000 + 3) % pause for longer than needed just in case timing is off
-    % tell cerestim to stop stimulating (it should be done, but to prevent
-    % errors)
-    stimObj.stop();
-    pause(0.5 + rand()/2) % just in case there is some delay in .stop()
-    pause(.5)
     %stop recording:
     cbmex('fileconfig',fName,'',0)
 end

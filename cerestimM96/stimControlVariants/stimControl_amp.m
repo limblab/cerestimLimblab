@@ -17,16 +17,13 @@
 
 usingStimSwitchToRecord = 0;
 
-stimAmps=[80];%different amplitudes of stimulation, this is per electrode
+stimAmps=[10:10:60];%different amplitudes of stimulation, this is per electrode
 
 for i = 1:numel(stimAmps)
-    electrodeList{i} = [22,32,45,89,59];
+    electrodeList{i} = [pattern2];
 end
-% electrodeList{2}=[1];
-% electrodeList{3}=[2];
-% electrodeList{4}=[22];
-% electrodeList{5}=[62];
-pulseWidth=200;%time for each phase of a pulse in uS
+
+pulseWidth=200;%time for each phase of a pulse in us
 freq = 330; % Hz
 trainLength=0.12;%length of the pulse train in s
 interpulse = 53;
