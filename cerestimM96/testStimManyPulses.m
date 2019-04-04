@@ -38,8 +38,8 @@ nPulses = [1,41,21,11,5,2,2,2];
 correctionFactor = 0; % ms correction
 
 nomFreq = 2;
-nTests = 20;
-num_files = 2;
+nTests = 250;
+num_files = 8;
 chanList = [21]; % can only handle single channel stim
 
 prefix=['Han_20190404_chan21dukeProjBox_dblPulse_trainExp'];
