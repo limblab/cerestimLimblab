@@ -24,24 +24,26 @@
 %nTests         :   number of times the script will issue a cathodal/anodal
 %                       stim pair
 %doublePulseLatency  : time in ms between the double pulses
-amp1 = 50;
-amp2 = 50;
+
 pWidth1 = 200;
 pWidth2 = 200;
 interpulse = 53;
 interphase = 53;
 pol = 0; % 0 is cathodic first
 doublePulseLatency = [-1,5,10,20,50,10,20,200]; % -1 = single pulse
+amp1 = [50,50,50,50,50,50,50,50];
+amp2 = amp1;
+nPulses = [1,41,21,11,5,2,2,2];
+
 correctionFactor = 0; % ms correction
 
-nPulses = [1,41,21,11,5,2,2,2];
 nomFreq = 2;
-nTests = 250;
-num_files = 8;
+nTests = 20;
+num_files = 2;
 chanList = [21]; % can only handle single channel stim
 
-prefix=['Han_20190403_chan21dukeProjBox_dblPulse_trainExp'];
-folder='C:\data\Han\Han_20190403_dblPulse_trains\';
+prefix=['Han_20190404_chan21dukeProjBox_dblPulse_trainExp'];
+folder='C:\data\Han\Han_20190404_dblPulse_trains\';
 
 %configure params
 freq=floor(1/((pWidth1+pWidth2+interphase+interpulse)*10^-6));%hz
@@ -56,15 +58,29 @@ if ~stimObj.isConnected();
     error('testStim:noStimulator','could not establish connection to stimulator')
 end
 
-stimObj.setStimPattern('waveform',1,...
+waveforms = [];
+
+for i = 1:numel(amp1)
+    stimObj.setStimPattern('waveform',i,...
                         'polarity',pol,...
                         'pulses',1,...
-                        'amp1',amp1,...
-                        'amp2',amp2,...
+                        'amp1',amp1(i),...
+                        'amp2',amp2(i),...
                         'width1',pWidth1,...
                         'width2',pWidth2,...
                         'interphase',interphase,...
                         'frequency',freq);
+                    
+    waveforms.parameters(i).polarity = pol; % 0 is cathodic first, look at matlab api
+    waveforms.parameters(i).amp1 = amp1(i);
+    waveforms.parameters(i).amp2 = amp2(i);
+    waveforms.parameters(i).pWidth1 = pWidth1;
+    waveforms.parameters(i).pWidth2 = pWidth2;
+    waveforms.parameters(i).interphase = interphase;
+    waveforms.parameters(i).freq = freq;
+    waveforms.parameters(i).interpulse = interpulse;
+    waveforms.parameters(i).nPulses = 1;
+end
 
 
 %establish cerebus connection
@@ -72,6 +88,9 @@ initializeCerebus();
 %loop through channels and log a test file for each one:
 for j=1:num_files
     disp(['working on chan: ',num2str(chanList)])
+    waveforms.waveSent = [];
+    waveforms.chanSent = {};
+    
     fName=startcerebusStimRecording(chanList,amp1,amp2,pWidth1,pWidth2,interpulse,j,folder,prefix,pol);
     for trial = 1:nTests
         dpl_idx = ceil(rand()*numel(doublePulseLatency));
@@ -81,11 +100,21 @@ for j=1:num_files
             num_pulses = nPulses(dpl_idx);
         end
         
+        if(numel(amp1) > 1)
+            wave_idx = dpl_idx;
+        else
+            wave_idx = 1;
+        end
+        
+        waveforms.waveSent(end+1,1) = wave_idx;
+        waveforms.chanSent{end+1,1} = chanList;
+        
         % build stim sequence
         stimObj.beginSequence()
         for i=1:num_pulses % cathodal then anodal
             % stimulate once on all channels
-            stimObj.autoStim(chanList,1) % only use waveform 1
+            
+            stimObj.autoStim(chanList,wave_idx) % only use waveform 1
             % pause for doublePulseLatency
             if(i ~= num_pulses)
                 stimObj.wait(doublePulseLatency(dpl_idx) - correctionFactor)
@@ -103,6 +132,9 @@ for j=1:num_files
     end
     %stop recording:
     cbmex('fileconfig',fName,'',0)
+    
+    save(strcat(folder,fName(1:end-3),'waveformsSent_',num2str(j)),'waveforms');    
+    
 end
 
 cbmex('close')

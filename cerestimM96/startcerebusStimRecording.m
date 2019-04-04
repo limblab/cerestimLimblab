@@ -8,8 +8,11 @@ function fName=startcerebusStimRecording(chan,amp1,amp2,pWidth1,pWidth2,interpul
     for k=1:6
         tStr=[tStr,num2str(t(k)),'_'];
     end
-    fName=[prefix,'_chan',num2str(chan),'stim_A1-',num2str(amp1),'_A2-',num2str(amp2),'_PW1-',num2str(pWidth1),'_PW2-',num2str(pWidth2),'_interpulse',num2str(interpulse),'_pol',num2str(pol),'_',fNum];
-
+    if(numel(amp1)>1)
+        fName=[prefix,'_chan',num2str(chan),'stim_A1-many','_A2-many','_PW1-',num2str(pWidth1),'_PW2-',num2str(pWidth2),'_interpulse',num2str(interpulse),'_pol',num2str(pol),'_',fNum];
+    else
+        fName=[prefix,'_chan',num2str(chan),'stim_A1-',num2str(amp1),'_A2-',num2str(amp2),'_PW1-',num2str(pWidth1),'_PW2-',num2str(pWidth2),'_interpulse',num2str(interpulse),'_pol',num2str(pol),'_',fNum];
+    end
     %start recording:
     ctr=0;
     tmp=dir(folder);
