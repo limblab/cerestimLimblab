@@ -1,17 +1,19 @@
 % %script to handle stimulation for Kramer psychophysical bias task:
 % fclose(instrfind)
 % clear all
-%  
+%
 % b = Bluetooth('HC-05', 1);
 % fopen(b);
+goodVibs = [1,2,3,4,5];
 maxSessionTime=2*60*60;%max lenght of session in seconds
-moveWord=64;
-holdWord=hex2dec('02');
+moveWord=hex2dec('30');
+holdWord=hex2dec('A0');
+startWord = hex2dec('20');
 DBMask=hex2dec('f0');
 maxWait=400;%maximum interval to wait before exiting
 pollInterval=.01;%polling interval in s
 chan=151;%digital input is CH151
-stimmed = false;
+newTrial = true;
 
 %configure stim parameters
 %initialize timer variables
@@ -27,9 +29,11 @@ cbmex('open')
 
 %clear the data buffers in central:
 cbmex('trialconfig',1);
+newTrial = true;
+r = randi(2);
 
 try
-
+    
     %initialize cerestim object:
     
     h=msgbox('Central Connection is open: stimulation is running','CBmex-notifier');
@@ -53,7 +57,7 @@ try
             end
             continue
         else%if we found some data:
-        
+            
             %parse raw word data from the digital channel:
             %convert word into single byte that contains the limblab state info
             words=bitshift(bitand(hex2dec('FF00'),data{chan,3}),-8);
@@ -66,62 +70,90 @@ try
                 words = words(word_indices_keep);
             end
             if ~isempty(words)
-                unique(words,'stable')
-            end
-%             %debug:
-%             if ~isempty(words)
-%                 for i=1:numel(words)
-%                     if words(i)<200
-%                         disp(['found word: ',num2str(words(i))])
-%                     end
-%                 end
-%                 wordlog=[ts,words];
-%             end
-            %disp(['et=',num2str(toc(sessionTimer)),' numWords=',num2str(length(words))]) %debug
-            %check if the words we found were stim words:
-            idx=find(bitand(words,DBMask)==moveWord);
-            %if we found no stim words, continue:
-            if isempty(idx)
-                if ~isempty(pollInterval)
-                    pause(pollInterval)
-                end
-                continue
-            end
+                words = unique(words,'stable');
+                if ~newTrial
+                    if ~isempty(find(ismember(bitand(words, DBMask), startWord)));
+                        newTrial = true;
+                        r = randi(2);
 
-            %if we got to this point we have a valid stim word; convert it
-            %to a code:
-            stimCode=1;
-            disp(['stimulating with code: ',num2str(stimCode)])
-            %% stim through bluetooth, write a comment in data to show that we vibrated
-            %and re-set the stimStart variable
-            stimStart=toc(sessionTimer);
-            stimmed = true;
-            disp('I should stim here')
-        fwrite(b, '1')
-        cbmex('comment', 0, 0, 'vib1');
-        pause(5)
-        fwrite(b, '0')
-        cbmex('comment', 0, 0, 'vib0');
-        
+                        disp('new trial')
+                    end
+                end
+                
+            end
+            if newTrial
+                
+                if ~isempty(words)
+                    if r ==1
+                        stimWord =moveWord;
+                    else
+                        stimWord = holdWord; 
+                    end
+                    idx=find(ismember(bitand(words,DBMask),stimWord));
+                    %if we found no stim words, continue:
+                    if isempty(idx)
+                        if ~isempty(pollInterval)
+                            pause(pollInterval)
+                        end
+                        continue
+                    else
+                        newTrial = false;
+
+                    end
+                    vibMot = randi(length(goodVibs)+1)-1;
+                    if vibMot>0
+                    if r == 1
+                        disp(['stimulating for movement' , num2str(vibMot)])
+                        stimStart=toc(sessionTimer);
+                        pause(.2)
+                        fwrite(b, num2str(goodVibs(vibMot)))
+                        cbmex('comment', 0, 0, ['vibMove',num2str(goodVibs(vibMot))]);
+                        pause(.5)
+                        fwrite(b, '0')
+                        cbmex('comment', 0, 0, ['vibMoveOff', num2str(goodVibs(vibMot))]);
+                        cbmex('trialconfig',1);
+                    else
+                        disp(['stimulating for hold', num2str(vibMot)])
+                        stimStart=toc(sessionTimer);
+                        pause(.2)
+                        fwrite(b, num2str(goodVibs(vibMot)))
+                        cbmex('comment', 0, 0, ['vibHold',num2str(goodVibs(vibMot))]);
+                        pause(.5)
+                        fwrite(b, '0')
+                        cbmex('comment', 0, 0, ['vibHoldOff',num2str(goodVibs(vibMot))]);
+                        cbmex('trialconfig',1);
+                    end
+                    else
+                        disp(['stimulating for hold 0'])
+                        stimStart=toc(sessionTimer);
+                        pause(.2)
+                        fwrite(b, '0')
+                        cbmex('comment', 0, 0, ['vibHold',num2str(vibMot)]);
+                        pause(.5)
+                        fwrite(b, '0')
+                        cbmex('comment', 0, 0, ['vibHoldOff',num2str(vibMot)]);
+                        cbmex('trialconfig',1);
+                    end
+                end
+            end
         end
         
-
         if ~isempty(pollInterval)
             pause(pollInterval)
         end
     end
 catch ME
     %clean up cerebus connection and then error
-%     x=cbmex('close');
-%     if ~x;
-%         warning('psychophysicsStim:failedCentralDisconnect','failed to disconnect from Central while handling error')
-%     end
-%     if ishandle(h)
-%         close(h)
-%     end
-%     if ~stimObj.disconnect(1);
-%         warning('psychophysicsStim:failedStimDisconnect','failed to disconnect from stimulator while handling error')
-%     end
+    %     x=cbmex('close');
+    %     if ~x;
+    %         warning('psychophysicsStim:failedCentralDisconnect','failed to disconnect from Central while handling error')
+    %     end
+    %     if ishandle(h)
+    %         close(h)
+    %     end
+    %     if ~stimObj.disconnect(1);
+    %         warning('psychophysicsStim:failedStimDisconnect','failed to disconnect from stimulator while handling error')
+    %     end
     rethrow(ME)
 end
 cbmex('close')

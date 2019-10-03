@@ -22,11 +22,16 @@ function buildStimSequence_manyChannels(stimObj,chanLists,waveNum,pulseWait)
     % if we are only stimulating on a single electrode, do not call
     % beginGroup and endGroup to minimize the number of commands
 
+    
     stimObj.beginSequence()
         for i=1:numel(chanLists)
             stimObj.beginGroup()
                 for k=1:numel(chanLists{i})
-                    stimObj.autoStim(chanLists{i}(k),waveNum)
+                    if(~iscell(waveNum))
+                        stimObj.autoStim(chanLists{i}(k),waveNum)
+                    else
+                        stimObj.autoStim(chanLists{i}(k),waveNum{i}(k))
+                    end
                 end
             stimObj.endGroup()
         end

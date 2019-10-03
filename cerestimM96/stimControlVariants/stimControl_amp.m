@@ -17,15 +17,30 @@
 
 usingStimSwitchToRecord = 0;
 
-stimAmps=[10:10:60];%different amplitudes of stimulation, this is per electrode
+stimAmps=[50,60,70,70,80,90];%different amplitudes of stimulation, this is per electrode
+% electrodeList{1} = [21];
+% electrodeList{2} = [21];
 
-for i = 1:numel(stimAmps)
-    electrodeList{i} = [pattern2];
-end
+electrodeList = {};
+% for i = 1:numel(stimAmps)
+%     electrodeList{i} = 44; % 73 for duncan
+% end
+% electrodeList{1} = [44];
+% electrodeList{2} = [44];
+
+electrodeList{1} = [26];
+electrodeList{2} = [26];
+electrodeList{3} = [26];
+electrodeList{4} = [44];
+
+electrodeList{5} = [44];
+electrodeList{6} = [44];
+% electrodeList{7} = [12,13,22,30];
+% electrodeList{8} = [6,25,61,86];
 
 pulseWidth=200;%time for each phase of a pulse in us
-freq = 330; % Hz
-trainLength=0.12;%length of the pulse train in s
+freq = 300; % Hz
+trainLength=0.4;%length of the pulse train in s
 interpulse = 53;
 numPulses=freq*trainLength;
 stimDelay=0;%0.115;%delays start of stim train to coincide with middle of force rise
@@ -33,7 +48,7 @@ stimDelay=0;%0.115;%delays start of stim train to coincide with middle of force 
 stimWord=hex2dec('60');
 DBMask=hex2dec('f0');
 maxWait=400;%maximum interval to wait before exiting
-pollInterval=[0.01];%polling interval in s
+pollInterval=[0.1];%polling interval in s
 chan=151;%digital input is CH151
 
 nomFreq = floor(1/((pulseWidth*2+53+interpulse)*10^-6));
@@ -99,6 +114,8 @@ try
     set(btnh,'String','Close Connection');
     set(btnh,'Position',[15 7 120 17]);
     
+    pause(0.1);
+    
     %wait for stim word via cbmex:
     intertrialTimer=tic;
     while(ishandle(h))
@@ -127,9 +144,9 @@ try
                 word_indices_keep = setxor(word_indices_remove,1:length(words));
                 words = words(word_indices_keep);
             end
-            if ~isempty(words)
+%             if ~isempty(words)
 %                 unique(words,'stable')
-            end
+%             end
 %             %debug:
 %             if ~isempty(words)
 %                 for i=1:numel(words)
@@ -162,7 +179,7 @@ try
                 warning('managed to get a bad stimcode, cant assign electrode group')
                 continue
             end
-            EL=electrodeList{stimCode};
+            EL=electrodeList{stimCode}
             %and re-set the stimStart variable
             stimStart=toc(sessionTimer);
         end

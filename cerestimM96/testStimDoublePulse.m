@@ -31,7 +31,7 @@ pWidth2 = 200;
 interpulse = 53;
 interphase = 53;
 pol = 0; % 0 is cathodic first
-doublePulseLatency = [-1,10,20,200]; % -1 = single pulse
+doublePulseLatency = [5,10,20,200]; % -1 = single pulse
 
 nPulses = 1;
 nomFreq = 2;

@@ -25,28 +25,28 @@
 %                       stim pair
 %doublePulseLatency  : time in ms between the double pulses
 
-pWidth1 = 200;
-pWidth2 = 200;
+pWidth1 = [200,800,200,800,200,800];
+pWidth2 = [200,200,200,200,200,200];
 interpulse = 53;
 interphase = 53;
 pol = 0; % 0 is cathodic first
-doublePulseLatency = [-1,5,10,20,50,10,20,200]; % -1 = single pulse
-amp1 = [50,50,50,50,50,50,50,50];
-amp2 = amp1;
-nPulses = [1,41,21,11,5,2,2,2];
+doublePulseLatency = [10,10,10,10,10,10]; % -1 = single pulse, % 20, 50, 100, 200
+amp1 = [60,15,40,10,20,5];
+amp2 = [60,60,40,40,20,20];
+nPulses = [11,11,11,11,11,11];
 
-correctionFactor = 0; % ms correction
+correctionFactor = -0.453; % ms correction
 
-nomFreq = 2;
-nTests = 250;
-num_files = 8;
-chanList = [21]; % can only handle single channel stim
+nomFreq = [1.5];
+nTests = 100; % want 200 of each condition
+num_files = 12;
+chanList = [23]; % can only handle single channel stim
 
-prefix=['Han_20190404_chan21dukeProjBox_dblPulse_trainExp'];
-folder='C:\data\Han\Han_20190404_dblPulse_trains\';
+prefix=['Han_'];
+folder='C:\H\';
 
 %configure params
-freq=floor(1/((pWidth1+pWidth2+interphase+interpulse)*10^-6));%hz
+% freq=floor(1/((pWidth1+pWidth2+interphase+interpulse)*10^-6));%hz
 
 if ~exist('stimObj','var')
     stimObj=cerestim96;
@@ -61,21 +61,23 @@ end
 waveforms = [];
 
 for i = 1:numel(amp1)
+    
+    freq(i) = floor(1/((pWidth1(i)+pWidth2(i)+interphase+interpulse)*10^-6));%hz
     stimObj.setStimPattern('waveform',i,...
                         'polarity',pol,...
                         'pulses',1,...
                         'amp1',amp1(i),...
                         'amp2',amp2(i),...
-                        'width1',pWidth1,...
-                        'width2',pWidth2,...
+                        'width1',pWidth1(i),...
+                        'width2',pWidth2(i),...
                         'interphase',interphase,...
-                        'frequency',freq);
+                        'frequency',freq(i));
                     
     waveforms.parameters(i).polarity = pol; % 0 is cathodic first, look at matlab api
     waveforms.parameters(i).amp1 = amp1(i);
     waveforms.parameters(i).amp2 = amp2(i);
-    waveforms.parameters(i).pWidth1 = pWidth1;
-    waveforms.parameters(i).pWidth2 = pWidth2;
+    waveforms.parameters(i).pWidth1 = pWidth1(i);
+    waveforms.parameters(i).pWidth2 = pWidth2(i);
     waveforms.parameters(i).interphase = interphase;
     waveforms.parameters(i).freq = freq;
     waveforms.parameters(i).interpulse = interpulse;
@@ -91,7 +93,7 @@ for j=1:num_files
     waveforms.waveSent = [];
     waveforms.chanSent = {};
     
-    fName=startcerebusStimRecording(chanList,amp1,amp2,pWidth1,pWidth2,interpulse,j,folder,prefix,pol);
+    fName=startcerebusStimRecording(chanList,amp1,amp2,pWidth1(1),pWidth2(1),interpulse,j,folder,prefix,pol);
     for trial = 1:nTests
         dpl_idx = ceil(rand()*numel(doublePulseLatency));
         if(doublePulseLatency(dpl_idx) <= 0)
@@ -125,7 +127,8 @@ for j=1:num_files
 
         % deliver our stimuli
         stimObj.play(1);
-        pause(1/nomFreq + 0.01) % pause for longer than needed just in case timing is off
+        nomFreq_idx = ceil(rand(1,1)*numel(nomFreq));
+        pause(1/nomFreq(nomFreq_idx)) % pause for longer than needed just in case timing is off
         % tell cerestim to stop stimulating (it should be done, but to prevent
         % errors)
         stimObj.stop();

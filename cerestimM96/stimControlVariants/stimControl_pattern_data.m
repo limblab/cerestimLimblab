@@ -1,49 +1,23 @@
 %Script to stimulate based on words received on the cerebus digital input
-%lines. User must configure the script with a cell array of electrode
-%numbers. the code of the stim word selects which electrode(/s) is stimulated.
-%user must configure an array of amplitudes. Script will select stimulation
-%amplitude based on stim code recieved. number of amplitudes, and number of
-%electrode groups must match.
-%elaboration: this code can accomplish stimulation with same amplitude on
-%multiple electrodes by repeating the electrode definition for each
-%amplitude. The code can accomplish stimulatin on multiple electrodes with
-%same amplitude by repeating the amplitude definition.
-%
-%User must also configure pulse parameters
-% clear all
+%lines. 
+%% this script assumes that wave_mappings and freq_all already exists
+% wave_mappings is a cell array that contains information for each pattern.
+% Each cell contains a different pattern. This is stored as an array of 
+% (chan_num, wave_freq_norm, wave_num). The code below builds 15 waveforms
+% (cerestim limit) and then uses the mappings in wave_mappings to deliver
+% the stimuli on the channels in chan_num. This code currently handles up
+% to 16 channels. 
+% freq_all_norm is a 15x1 array containing the normalized frequencies for each waveform.
 
-%script setup- 
-%general setup:
 
-%configure stim parameters
+pulseWidth=200;%time for each phase of a pulse in uS
+trainLength=0.3;%length of the pulse train in s
+interpulse = 53;
+interphase = 53;
+correctionFactor = 300; %us, measured delay between commands
+num_pulses = ceil(pattern_data.frequency*trainLength);
 
-usingStimSwitchToRecord = 1;
-
-% for i = 1:numel(chan_list_2)
-%     electrodeList{i} = chan_list_2(i);
-% end
-% electrodeList{1} = [26];
-% electrodeList{2} = [44];
-
-electrodeList{1} = [25];
-% electrodeList{2} = [73];
-% electrodeList{3} = [2];
-% electrodeList{4} = [12];
-% electrodeList{5} = [20];
-% electrodeList{6} = [96];
-% electrodeList{7} = [92];
-% electrodeList{8} = [42];
-% electrodeList{9} = [7];
-% electrodeList{10} = [57];
-
-stimAmp=[30];%different amplitudes of stimulation
-pulseWidth=200;%time for each phase of a pulse in us
-freq = 100; % Hz
-trainLength=0.1;%length of the pulse train in s
-interpulse = 53; %
-
-numPulses=ceil(freq*trainLength);
-stimDelay=0;%0.115;%delays start of stim train to coincide with middle of force rise
+stimDelay=0;%
 % configure cbmex parameters:
 stimWord=hex2dec('60');
 DBMask=hex2dec('f0');
@@ -51,7 +25,7 @@ maxWait=400;%maximum interval to wait before exiting
 pollInterval=[0.01];%polling interval in s
 chan=151;%digital input is CH151
 
-nomFreq = floor(1/((pulseWidth*2+53+interpulse)*10^-6));
+freq = floor(1/((pulseWidth*2+interphase+interpulse)*10^-6));
 
 %initialize timer variables
 sessionTimer=tic;
@@ -86,25 +60,15 @@ try
         %configure waveform:
         
 %     disp(['setting stim pattern; ',num2str(i)])
-    if(usingStimSwitchToRecord)
-        stimObj.setStimPattern('waveform',1,...
-                            'polarity',0,...
-                            'pulses',1,...
-                            'amp1',stimAmp,...
-                            'amp2',stimAmp,...
-                            'width1',pulseWidth,...
-                            'width2',pulseWidth,...
-                            'interphase',53,...
-                            'frequency',nomFreq);
-    else
-        stimObj.setStimPattern('waveform',1,...
+    for i = 1:numel(pattern_data.amps)
+        stimObj.setStimPattern('waveform',i,...
                                 'polarity',0,...
-                                'pulses',numPulses,...
-                                'amp1',stimAmp,...
-                                'amp2',stimAmp,...
+                                'pulses',1,...
+                                'amp1',pattern_data.amps(i),...
+                                'amp2',pattern_data.amps(i),...
                                 'width1',pulseWidth,...
                                 'width2',pulseWidth,...
-                                'interphase',53,...
+                                'interphase',interphase,...
                                 'frequency',freq);
     end
     
@@ -172,11 +136,10 @@ try
             stimCode=words(idx(1))-stimWord+1;
             disp(['stimulating with code: ',num2str(stimCode)])
                 
-            if stimCode>numel(electrodeList) || stimCode<1
+            if stimCode>numel(pattern_data.pattern) || stimCode<1
                 warning('managed to get a bad stimcode, cant assign electrode group')
                 continue
             end
-            EL=electrodeList{stimCode}
             %and re-set the stimStart variable
             stimStart=toc(sessionTimer);
         end
@@ -184,15 +147,32 @@ try
         %stim command:
         tic
         % if using stim switch to record
-        if(usingStimSwitchToRecord)
-            buildStimSequence(stimObj,EL,repmat(stimCode,numPulses,1),1000/freq); % wait takes in milliseconds
-        else
-            buildStimSequence(stimObj,EL,1,10); % wait takes in milliseconds
+        
+        % stim code = pattern
+        % get list of channels that have non-zero amp
+        chan_mask = pattern_data.pattern{stimCode}.amp > 0;
+        chan_list = pattern_data.pattern{stimCode}.chans(chan_mask);
+        wave_list = pattern_data.pattern{stimCode}.wave_num(chan_mask);
+        numGroups = ceil(numel(chan_list)/16);
+        
+        CHAN_LISTS = {};
+        WAVE_LISTS = {};
+        for group = 1:numGroups
+            if(group == numGroups)
+                CHAN_LISTS{group} = chan_list((group-1)*floor(numel(chan_list)/numGroups) + 1:end);
+                WAVE_LISTS{group} = wave_list((group-1)*floor(numel(chan_list)/numGroups) + 1:end);
+            else
+                CHAN_LISTS{group} = chan_list((group-1)*floor(numel(chan_list)/numGroups) + 1:(group)*floor(numel(chan_list)/numGroups));
+                WAVE_LISTS{group} = wave_list((group-1)*floor(numel(chan_list)/numGroups) + 1:(group)*floor(numel(chan_list)/numGroups));
+            end
         end
         
+        buildStimSequence_manyChannels(stimObj,CHAN_LISTS,WAVE_LISTS,...
+            1000/pattern_data.frequency-numGroups*(2*pulseWidth + interphase + interpulse + correctionFactor)*1E-3); % wait takes in milliseconds
+        
         pause(stimDelay-toc);
-        stimObj.play(1)
-        pause(trainLength + 0.1);
+        stimObj.play(num_pulses)
+        pause(trainLength + 0.25);
         
         if ~isempty(pollInterval)
             pause(pollInterval)

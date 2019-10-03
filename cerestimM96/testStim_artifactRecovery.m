@@ -23,6 +23,10 @@
 %nTests         :   number of times the script will issue a cathodal/anodal
 %                       stim pair
 %configure params
+
+
+aux_chan
+
 freq=floor(1/((pWidth1+pWidth2+interphase+interpulse)*10^-6))%hz
 
 if ~exist('stimObj','var')
@@ -57,9 +61,9 @@ stimObj.setStimPattern('waveform',1,...
                     
 stimObj.setStimPattern('waveform',3,...
                         'polarity',0,...
-                        'pulses',15,...
-                        'amp1',20,...
-                        'amp2',20,...
+                        'pulses',35,...
+                        'amp1',5,...
+                        'amp2',5,...
                         'width1',53,...
                         'width2',53,...
                         'interphase',53,...
@@ -70,40 +74,34 @@ initializeCerebus();
 %loop through channels and log a test file for each one:
 for j=1:numel(chanList)
     disp(['working on chan: ',num2str(chanList(j))])
-%     fName=startcerebusStimRecording(chanList(j),amp1,amp2,pWidth1,pWidth2,interpulse,j,folder,prefix,01);
+    fName=startcerebusStimRecording(chanList(j),amp1,amp2,pWidth1,pWidth2,interpulse,j,folder,prefix,01);
 %     fName = [fName,'_delay',num2str(signalDelay*100)];
-%         ctr=0;
-%         tmp=dir(folder);
-%         while isempty(cell2mat(strfind({tmp.name},fName))) & ctr<10
-%             cbmex('fileconfig',[folder,fName],'',0)
-%             pause(.5);
-%             cbmex('fileconfig',[folder,fName],'testing stimulation artifacts',1);
-%             pause(1);
-%             ctr=ctr+1;
-%             tmp=dir(folder);
-%         end
-%         if ctr==10
-%            warning('tried to start recording and failed') 
-%         end
-%     pause(8)
 
-    buildStimSequence(stimObj,chanList(j),[1],1000/nomFreq);
-%     stimObj.beginSequence()
-%     stimObj.beginGroup()
-%     stimObj.autoStim(chanList(j),1)
-% %     stimObj.autoStim(33,3)
-%     stimObj.endGroup()
+%     buildStimSequence(stimObj,chanList(j),[1],1000/nomFreq);
+    stimObj.beginSequence()
+    stimObj.beginGroup()
+    stimObj.autoStim(chanList(j),1)
+    if(use_aux_chan)
+        for aux_chan_idx = 1:numel(aux_chan)
+            stimObj.autoStim(aux_chan(aux_chan_idx),aux_chan_wave(aux_chan_idx))
+        end
+    end
+    stimObj.endGroup()
 % 
-%     stimObj.wait(1000/nomFreq)
+    stimObj.wait(1000/nomFreq)
 % 
 %     
-%     stimObj.beginGroup()
-%     stimObj.autoStim(chanList(j),2)
-% %     stimObj.autoStim(33,3)
-%     stimObj.endGroup()
+    stimObj.beginGroup()
+    stimObj.autoStim(chanList(j),2)
+    if(use_aux_chan)
+        for aux_chan_idx = 1:numel(aux_chan)
+            stimObj.autoStim(aux_chan(aux_chan_idx),aux_chan_wave(aux_chan_idx))
+        end
+    end
+    stimObj.endGroup()
 %     
-%     stimObj.wait(1000/nomFreq)
-%     stimObj.endSequence()
+    stimObj.wait(1000/nomFreq)
+    stimObj.endSequence()
 %     %deliver our stimuli:
     stimObj.play(nTests); % apparently MATLAB is still running while the cerebus is sending stimulation
     % we need to pause long enough for the nTests to be done otherwise
@@ -112,10 +110,12 @@ for j=1:numel(chanList)
     pause(nTests/nomFreq + nPulses*interpulse/(10^6) + 2);
 % tell cerestim to stop stimulating (it should be done, but to prevent
     % errors)
+    pause(1); % for extra data
     stimObj.stop();
-%     pause(0.5 + rand()/2) % just in case there is some delay in .stop()
+    pause(3) % just in case there is some delay in .stop()
     %stop recording:
-%     cbmex('fileconfig',fName,'',0)
+    
+    cbmex('fileconfig',fName,'',0)
 end
 
 cbmex('close')
@@ -126,19 +126,19 @@ pause(2)
 
 
 %%
-if ~exist('stimObj','var')
-    stimObj=cerestim96;
-    stimObj.connect();
-elseif ~stimObj.isConnected();
-    stimObj.connect();
-end
-if ~stimObj.isConnected();
-    error('testStim:noStimulator','could not establish connection to stimulator')
-end
-imp = [];
-    imp = stimObj.testElectrodes();
-    pause(0.01)
-
-stimObj.disconnect();
-stimObj.delete()
-clear stimObj
+% if ~exist('stimObj','var')
+%     stimObj=cerestim96;
+%     stimObj.connect();
+% elseif ~stimObj.isConnected();
+%     stimObj.connect();
+% end
+% if ~stimObj.isConnected();
+%     error('testStim:noStimulator','could not establish connection to stimulator')
+% end
+% % imp = [];
+% %     imp = stimObj.testElectrodes();
+% %     pause(0.01)
+% 
+% stimObj.disconnect();
+% stimObj.delete()
+% clear stimObj

@@ -37,7 +37,7 @@ nPulses = 50; % number of pulses in a train %% beginSequence can only have 128 c
 
 pulseLatency = 1000/100; % lets do 2, 4, 6 ,8, 10, 20, 30 % in ms
 
-nomFreq = 0.5; % frequency between start of trains
+nomFreq = 2; % frequency between start of trains
 nTests = 5; % n times to do a train (total trains = this*2 because anodal then cathodal trains)
 
 chanList = [96]; % 
