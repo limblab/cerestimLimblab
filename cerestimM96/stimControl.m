@@ -25,7 +25,7 @@ usingStimSwitchToRecord = 1;
 % electrodeList{1} = [26];
 % electrodeList{2} = [44];
 
-electrodeList{1} = [25];
+electrodeList{1} = [21];
 % electrodeList{2} = [73];
 % electrodeList{3} = [2];
 % electrodeList{4} = [12];
@@ -36,7 +36,7 @@ electrodeList{1} = [25];
 % electrodeList{9} = [7];
 % electrodeList{10} = [57];
 
-stimAmp=[30];%different amplitudes of stimulation
+stimAmp=[20];%different amplitudes of stimulation
 pulseWidth=200;%time for each phase of a pulse in us
 freq = 100; % Hz
 trainLength=0.1;%length of the pulse train in s

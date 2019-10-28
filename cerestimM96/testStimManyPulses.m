@@ -25,25 +25,38 @@
 %                       stim pair
 %doublePulseLatency  : time in ms between the double pulses
 
-pWidth1 = [200,800,200,800,200,800];
-pWidth2 = [200,200,200,200,200,200];
+pWidth1 = [200];
+pWidth2 = [200];
 interpulse = 53;
 interphase = 53;
 pol = 0; % 0 is cathodic first
-doublePulseLatency = [10,10,10,10,10,10]; % -1 = single pulse, % 20, 50, 100, 200
-amp1 = [60,15,40,10,20,5];
-amp2 = [60,60,40,40,20,20];
+doublePulseLatency = [10]; % -1 = single pulse, % 20, 50, 100, 200
+amp1 = [60];
+amp2 = [60];
 nPulses = [11,11,11,11,11,11];
 
-correctionFactor = -0.453; % ms correction
+% pWidth1 = [200,200,200,200,200]; 
+% pWidth2 = [200,200,200,200,200]; 
+% interpulse = 53;
+% interphase = 53; 
+% pol = 0;
+% doublePulseLatency = [-1,5,10,20,50];
+% amp1 = [50,50,50,50,50];
+% amp2 = amp1;
+% nPulses = [1,41,21,11,5];
 
-nomFreq = [1.5];
-nTests = 100; % want 200 of each condition
-num_files = 12;
-chanList = [23]; % can only handle single channel stim
+correctionFactor = 0; % ms correction
 
-prefix=['Han_'];
-folder='C:\H\';
+nomFreq = [2];
+
+nTests = 175; % 
+num_files = 31;
+% chanList = [3,41,9,21,60,62,91,23,44,29,93,94,1,64,12,4,22,53,54,35,47,40,70,61]; % can only handle single channel stim
+% chanList = [58,33,52,8,96,66,76,15,27,39,58,84,14,55,10,6,16,2,90,31,92,95,7,89,41,60,62,44,64,53,54,47,40,61];
+% chanList = [1,2,4,6,7,8,9,33,34,35,36,37,39,41,45,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,90];
+chanList = 1;
+prefix=['Duncan_'];
+folder='C:\D\';
 
 %configure params
 % freq=floor(1/((pWidth1+pWidth2+interphase+interpulse)*10^-6));%hz
@@ -89,7 +102,8 @@ end
 initializeCerebus();
 %loop through channels and log a test file for each one:
 for j=1:num_files
-    disp(['working on chan: ',num2str(chanList)])
+    disp(['working on file: ',num2str(j)])
+
     waveforms.waveSent = [];
     waveforms.chanSent = {};
     
@@ -108,15 +122,18 @@ for j=1:num_files
             wave_idx = 1;
         end
         
+        chan_idx = ceil(rand()*numel(chanList));
+        disp(['Stim chan: ',num2str(chanList(chan_idx))]);
+        
         waveforms.waveSent(end+1,1) = wave_idx;
-        waveforms.chanSent{end+1,1} = chanList;
+        waveforms.chanSent{end+1,1} = chanList(chan_idx);
         
         % build stim sequence
         stimObj.beginSequence()
         for i=1:num_pulses % cathodal then anodal
             % stimulate once on all channels
             
-            stimObj.autoStim(chanList,wave_idx) % only use waveform 1
+            stimObj.autoStim(chanList(chan_idx),wave_idx) % only use waveform 1
             % pause for doublePulseLatency
             if(i ~= num_pulses)
                 stimObj.wait(doublePulseLatency(dpl_idx) - correctionFactor)
@@ -128,9 +145,13 @@ for j=1:num_files
         % deliver our stimuli
         stimObj.play(1);
         nomFreq_idx = ceil(rand(1,1)*numel(nomFreq));
-        pause(1/nomFreq(nomFreq_idx)) % pause for longer than needed just in case timing is off
+        if(num_pulses*doublePulseLatency(dpl_idx) > 500)
+            pause(2.5+1/nomFreq(nomFreq_idx));
+        else
+            pause(1/nomFreq(nomFreq_idx)+0.1); % pause for longer than needed just in case timing is off
         % tell cerestim to stop stimulating (it should be done, but to prevent
         % errors)
+        end
         stimObj.stop();
     end
     %stop recording:
