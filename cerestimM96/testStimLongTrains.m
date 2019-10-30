@@ -30,34 +30,24 @@ pWidth2 = [200];
 interpulse = 53;
 interphase = 53;
 pol = 0; % 0 is cathodic first
-doublePulseLatency = [9.5]; % -1 = single pulse, % 20, 50, 100, 200
+doublePulseLatency = [20]; % -1 = single pulse, % 20, 50, 100, 200
 amp1 = [60];
 amp2 = [60];
-nPulses = [11,11,11,11,11,11];
+nPulses = [51];
 
-% pWidth1 = [200,200,200,200,200]; 
-% pWidth2 = [200,200,200,200,200]; 
-% interpulse = 53;
-% interphase = 53; 
-% pol = 0;
-% doublePulseLatency = [-1,5,10,20,50];
-% amp1 = [50,50,50,50,50];
-% amp2 = amp1;
-% nPulses = [1,41,21,11,5];
+prefix=['Han_50Hz'];
+chanList = 14;
 
 correctionFactor = 0; % ms correction
 
-nomFreq = [5];
-timeBetweenLongTrains = 220;
+nomFreq = [1/5]; %
 
-nTests = 300; % 
-num_files = 3;
+nTests = 65; % 
+num_files = 1;
 % chanList = [3,41,9,21,60,62,91,23,44,29,93,94,1,64,12,4,22,53,54,35,47,40,70,61]; % can only handle single channel stim
 % chanList = [58,33,52,8,96,66,76,15,27,39,58,84,14,55,10,6,16,2,90,31,92,95,7,89,41,60,62,44,64,53,54,47,40,61];
 % chanList = [1,2,4,6,7,8,9,33,34,35,36,37,39,41,45,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,90];
-chanList = 4;
-prefix=['Duncan_'];
-folder='C:\D\';
+folder='C:\H\';
 
 %configure params
 % freq=floor(1/((pWidth1+pWidth2+interphase+interpulse)*10^-6));%hz
@@ -131,32 +121,22 @@ for j=1:num_files
         
         % build stim sequence
         stimObj.beginSequence()
-        for i=1:num_pulses % cathodal then anodal
-            % stimulate once on all channels
+        % stimulate once on all channels
             
-            stimObj.autoStim(chanList(chan_idx),wave_idx) % only use waveform 1
-            % pause for doublePulseLatency
-            if(i ~= num_pulses)
-                stimObj.wait(doublePulseLatency(dpl_idx) - correctionFactor)
-            end
-            % wait the nominal frequency
-        end
+        stimObj.autoStim(chanList(chan_idx),wave_idx) % only use waveform 1
+        stimObj.wait(doublePulseLatency(dpl_idx) - correctionFactor)
+        % end sequence
         stimObj.endSequence()
 
         % deliver our stimuli
-        stimObj.play(1);
+        stimObj.play(num_pulses);
         nomFreq_idx = ceil(rand(1,1)*numel(nomFreq));
-        if(num_pulses*doublePulseLatency(dpl_idx) > 500)
-            pause(2.5+1/nomFreq(nomFreq_idx));
-        else
-            pause(1/nomFreq(nomFreq_idx)); % pause for longer than needed just in case timing is off
+
+            pause(1/nomFreq(nomFreq_idx)+0.1); % pause for longer than needed just in case timing is off
         % tell cerestim to stop stimulating (it should be done, but to prevent
         % errors)
-        end
         stimObj.stop();
     end
-    
-    pause(timeBetweenLongTrains)
     %stop recording:
     cbmex('fileconfig',fName,'',0)
     
