@@ -3,9 +3,9 @@
 %configure params
 
 pWidth=200;%in us
-amp1=50;%in uA
+amp1=70;%in uA
 pWidth1=200;%in us
-amp2=50;%in uA
+amp2=70;%in uA
 pWidth2=200;%in us
 interphase=53;
 % 

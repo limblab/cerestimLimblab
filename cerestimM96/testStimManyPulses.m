@@ -25,14 +25,14 @@
 %                       stim pair
 %doublePulseLatency  : time in ms between the double pulses
 
-pWidth1 = [200];
-pWidth2 = [200];
+pWidth1 = repmat(200,1,4);
+pWidth2 = pWidth1;
 interpulse = 53;
 interphase = 53;
 pol = 0; % 0 is cathodic first
-doublePulseLatency = [9.5]; % -1 = single pulse, % 20, 50, 100, 200
-amp1 = [60];
-amp2 = [60];
+doublePulseLatency = 1000./repmat(125,1,4); % -1 = single pulse, % 20, 50, 100, 200
+amp1 = repmat(40,1,4);
+amp2 = amp1;
 nPulses = [11,11,11,11,11,11];
 
 % pWidth1 = [200,200,200,200,200]; 
@@ -131,20 +131,15 @@ for j=1:num_files
         
         % build stim sequence
         stimObj.beginSequence()
-        for i=1:num_pulses % cathodal then anodal
-            % stimulate once on all channels
-            
-            stimObj.autoStim(chanList(chan_idx),wave_idx) % only use waveform 1
+        % stimulate once on all channels    
+        stimObj.autoStim(chanList(chan_idx),wave_idx) % only use waveform 1
             % pause for doublePulseLatency
-            if(i ~= num_pulses)
-                stimObj.wait(doublePulseLatency(dpl_idx) - correctionFactor)
-            end
+        stimObj.wait(doublePulseLatency(dpl_idx) + correctionFactor)
             % wait the nominal frequency
-        end
         stimObj.endSequence()
 
         % deliver our stimuli
-        stimObj.play(1);
+        stimObj.play(num_pulses);
         nomFreq_idx = ceil(rand(1,1)*numel(nomFreq));
         if(num_pulses*doublePulseLatency(dpl_idx) > 500)
             pause(2.5+1/nomFreq(nomFreq_idx));

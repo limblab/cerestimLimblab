@@ -25,39 +25,37 @@
 %                       stim pair
 %doublePulseLatency  : time in ms between the double pulses
 
-pWidth1 = repmat([200],1,12);
+pWidth1 = repmat(200,1,12);
 pWidth2 = pWidth1;
 interpulse = 53;
 interphase = 53;
 pol = 0; % 0 is cathodic first
-doublePulseLatency = 1000./[125,125,125,100,100,100,75,75,75,50,50,50]; % -1 = single pulse, % 20, 50, 100, 200
-amp1 = [20,40,60,20,40,60,20,40,60,20,40,60];
+doublePulseLatency = 1000./[repmat(180,1,9),116,86,56]; % -1 = single pulse, % 20, 50, 100, 200
+amp1 = [repmat(40,1,12)];
 amp2 = amp1;
-nPulses = [125,125,125,100,100,100,75,75,75,50,50,50]*4.2; % 4 second long trains
-
-folder='C:\H\';
-prefix=['Han_'];
-
-chanList = 10;
+nPulses = [10,10,10,19,19,19,37,37,37,ceil(116*4),ceil(86*4),ceil(56*4)]; % 14 pulses for 100ms
 
 correctionFactor = -0.4; % ms correction
 
-nomFreq = [1/20]; %
+nomFreq = 1000./[75,100,150,150,200,300,300,400,600,4000,4000,4000];
+num_trains = ceil(4.*nomFreq);
+timeBetweenLongTrains = 16; % s, time between end of 1 4-s intermittent train and start of second
 
-nTests = 8; % 
-num_files = 12;
+nTests = 12; % 
+num_files = 8;
 
-if(mod(nTests*num_files,numel(nPulses)) ~= 0)
-    error('number of stimuli not divisible by number of conditions');
-end
+chanList = 62;
 
-wave_sent_list = repmat([1:1:numel(nPulses)],1,floor(nTests*num_files/numel(nPulses)));
-wave_sent_list = wave_sent_list(randperm(numel(wave_sent_list)));
-wave_counter = 1;
-
+prefix=['Han_'];
+folder='C:\H\';
 
 %configure params
 % freq=floor(1/((pWidth1+pWidth2+interphase+interpulse)*10^-6));%hz
+
+% so we have equal number of conditions across all files
+wave_sent_list = repmat([1:1:numel(nPulses)],1,floor(nTests*num_files/numel(nPulses)));
+wave_sent_list = wave_sent_list(randperm(numel(wave_sent_list)));
+wave_counter = 1;
 
 if ~exist('stimObj','var')
     stimObj=cerestim96;
@@ -93,8 +91,6 @@ for i = 1:numel(amp1)
     waveforms.parameters(i).freq = freq;
     waveforms.parameters(i).interpulse = interpulse;
     waveforms.parameters(i).nPulses = 1;
-    waveforms.parameters(i).nPulsesTrain = nPulses(i);
-    waveforms.parameters(i).TrainIPI = doublePulseLatency(i);
 end
 
 
@@ -109,9 +105,11 @@ for j=1:num_files
     
     fName=startcerebusStimRecording(chanList,amp1,amp2,pWidth1(1),pWidth2(1),interpulse,j,folder,prefix,pol);
     for trial = 1:nTests
-%         dpl_idx = ceil(rand()*numel(doublePulseLatency));
         dpl_idx = wave_sent_list(wave_counter);
+%         dpl_idx = 12;
         wave_counter = wave_counter + 1;
+        disp(dpl_idx)
+        
         if(doublePulseLatency(dpl_idx) <= 0)
             num_pulses = 1;
         else
@@ -130,24 +128,33 @@ for j=1:num_files
         waveforms.waveSent(end+1,1) = wave_idx;
         waveforms.chanSent{end+1,1} = chanList(chan_idx);
         
-        % build stim sequence
+       % build stim sequence
         stimObj.beginSequence()
-        % stimulate once on all channels
-            
+        % stimulate once on all channels    
         stimObj.autoStim(chanList(chan_idx),wave_idx) % only use waveform 1
+            % pause for doublePulseLatency
         stimObj.wait(doublePulseLatency(dpl_idx) + correctionFactor)
-        % end sequence
+            % wait the nominal frequency
         stimObj.endSequence()
+         
 
-        % deliver our stimuli
-        stimObj.play(num_pulses);
-        nomFreq_idx = ceil(rand(1,1)*numel(nomFreq));
+        for train = 1:num_trains(dpl_idx)
+            % deliver our stimuli for each train
+            stimObj.play(num_pulses);
 
-            pause(1/nomFreq(nomFreq_idx)+0.1); % pause for longer than needed just in case timing is off
-        % tell cerestim to stop stimulating (it should be done, but to prevent
-        % errors)
-        stimObj.stop();
+%             pause(1/nomFreq(dpl_idx)); % pause until next train
+            java.lang.Thread.sleep(ceil(1000/nomFreq(dpl_idx)) - 1) % subtract off a ms
+            
+            % tell cerestim to stop stimulating (it should be done, but to prevent
+            % errors)
+%             stimObj.stop();
+        end
+        
+        pause(timeBetweenLongTrains)
+        
     end
+    
+    
     %stop recording:
     cbmex('fileconfig',fName,'',0)
     

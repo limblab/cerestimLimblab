@@ -30,21 +30,21 @@ pWidth2 = [200];
 interpulse = 53;
 interphase = 53;
 pol = 0; % 0 is cathodic first
-IPI_mean = [10]; % % ms
+IPI_mean = [8]; % % ms
 amp1 = [40];
 amp2 = [amp1];
-pulse_amp_mod_freq = 1; % hz
-pulse_amp_mod_depth = 20; % +- this value from amp1 and amp2
+pulse_amp_mod_freq = 5; % hz
+pulse_amp_mod_depth = 10; % +- this value from amp1 and amp2
 pulse_amp_mod_num_stim_codes = min(14,pulse_amp_mod_depth*2+1);
 
 stim_code_amps = [floor(amp1+linspace(-pulse_amp_mod_depth,pulse_amp_mod_depth,pulse_amp_mod_num_stim_codes)),amp1]; % append base amplitude for non PAM condition
 
 train_length = 4; % s
 
-prefix=['Han_'];
-chanList = 14;
+prefix=['Han_jPAM_'];
+chanList = 12;
 
-correctionFactor = 0; % ms correction
+correctionFactor = -1; % ms correction
 
 nomFreq = [1/20]; %
 
@@ -67,7 +67,7 @@ waveforms = [];
 
 for i = 1:numel(stim_code_amps)
     
-    freq(i) = floor(1/((pWidth1(i)+pWidth2(i)+interphase+interpulse)*10^-6));%hz
+    freq(i) = floor(1/((pWidth1+pWidth2+interphase+interpulse)*10^-6));%hz
     stimObj.setStimPattern('waveform',i,...
                         'polarity',pol,...
                         'pulses',1,...
@@ -110,8 +110,8 @@ for j=1:num_files
         % 3 = PAM and jitter frequency...fun....
         
         trial_type = floor(rand()*4);
-        
-        % define IPI between each pulse for each trial case (IPIs)
+        disp(trial_type);
+% define IPI between each pulse for each trial case (IPIs)
         % define stim code for each pulse for each trial case (stim_codes)
         switch trial_type
             case 0 % base case
@@ -123,6 +123,7 @@ for j=1:num_files
             case 1 % jitter frequency, base amp
                 num_pulses_max = train_length/(IPI_mean/1000) * 3;
                 IPIs = poissrnd(IPI_mean,num_pulses_max,1);
+                IPIs(IPIs < 2) = 2;
                 IPI_sum = cumsum(IPIs);
                 IPIs = IPIs(1:find(IPI_sum > train_length*1000,1,'first'));
                 
@@ -131,20 +132,24 @@ for j=1:num_files
             case 2 % pulse amp modulation
                 num_pulses = train_length/(IPI_mean/1000);
                 IPIs = IPI_mean + zeros(1,num_pulses);
-                pulse_times = [0,cumsum(IPIs(1:end))/1000];
+                pulse_times = [0,cumsum(IPIs(1:end-1))/1000];
                 
                 sin_vals = (sin(pulse_times*pulse_amp_mod_freq*2*pi)+1)/2;
                 stim_codes = ceil((sin_vals)*(numel(stim_code_amps)-1));
+                stim_codes(stim_codes == 0) = 1;
                 
             case 3 % PAM and jitter freq
                 num_pulses_max = train_length/(IPI_mean/1000) * 3;
-                IPIs = poissrnd(IPI_mean,num_pulses_max,1);
+                IPIs = poissrnd(IPI_mean,1,num_pulses_max);
+                IPIs(IPIs < 2) = 2;
+                
                 IPI_sum = cumsum(IPIs);
                 IPIs = IPIs(1:find(IPI_sum > train_length*1000,1,'first'));
                 
-                pulse_times = [0,cumsum(IPIs(1:end))/1000];
+                pulse_times = [0,cumsum(IPIs(1:end-1))/1000];
                 sin_vals = (sin(pulse_times*pulse_amp_mod_freq*2*pi)+1)/2;
                 stim_codes = ceil((sin_vals)*(numel(stim_code_amps)-1));
+                stim_codes(stim_codes == 0) = 1;
         end
         
         chan_idx = ceil(rand()*numel(chanList));
@@ -157,12 +162,12 @@ for j=1:num_files
         % deliver our stimuli
         for p = 1:numel(stim_codes)
             stimObj.groupStimulus(1,1,1,1,chanList(chan_idx),stim_codes(p))
-            pause(IPIs(p)/1000);
+            java.lang.Thread.sleep(IPIs(p) + correctionFactor);
 
         end
         nomFreq_idx = ceil(rand(1,1)*numel(nomFreq));
 
-        pause(1/nomFreq(nomFreq_idx)+0.1); % pause for longer than needed just in case timing is off
+        pause(1/nomFreq(nomFreq_idx)+0.1 - train_length); % pause for longer than needed just in case timing is off
         % tell cerestim to stop stimulating (it should be done, but to prevent
         % errors)
         stimObj.stop();

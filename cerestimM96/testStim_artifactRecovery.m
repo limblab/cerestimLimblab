@@ -61,9 +61,9 @@ stimObj.setStimPattern('waveform',1,...
                     
 stimObj.setStimPattern('waveform',3,...
                         'polarity',0,...
-                        'pulses',35,...
-                        'amp1',5,...
-                        'amp2',5,...
+                        'pulses',12,...
+                        'amp1',1,...
+                        'amp2',1,...
                         'width1',53,...
                         'width2',53,...
                         'interphase',53,...
@@ -76,7 +76,6 @@ for j=1:numel(chanList)
     disp(['working on chan: ',num2str(chanList(j))])
     fName=startcerebusStimRecording(chanList(j),amp1,amp2,pWidth1,pWidth2,interpulse,j,folder,prefix,01);
 %     fName = [fName,'_delay',num2str(signalDelay*100)];
-
 %     buildStimSequence(stimObj,chanList(j),[1],1000/nomFreq);
     stimObj.beginSequence()
     stimObj.beginGroup()
@@ -91,16 +90,16 @@ for j=1:numel(chanList)
     stimObj.wait(1000/nomFreq)
 % 
 %     
-    stimObj.beginGroup()
-    stimObj.autoStim(chanList(j),2)
-    if(use_aux_chan)
-        for aux_chan_idx = 1:numel(aux_chan)
-            stimObj.autoStim(aux_chan(aux_chan_idx),aux_chan_wave(aux_chan_idx))
-        end
-    end
-    stimObj.endGroup()
+%     stimObj.beginGroup()
+%     stimObj.autoStim(chanList(j),2)
+%     if(use_aux_chan)
+%         for aux_chan_idx = 1:numel(aux_chan)
+%             stimObj.autoStim(aux_chan(aux_chan_idx),aux_chan_wave(aux_chan_idx))
+%         end
+%     end
+%     stimObj.endGroup()
 %     
-    stimObj.wait(1000/nomFreq)
+%     stimObj.wait(1000/nomFreq)
     stimObj.endSequence()
 %     %deliver our stimuli:
     stimObj.play(nTests); % apparently MATLAB is still running while the cerebus is sending stimulation

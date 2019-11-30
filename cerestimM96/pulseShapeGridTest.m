@@ -11,20 +11,20 @@
 % polList = repmat([0],size(pulseAmpList,1),1);
 % polList = [0;polList]; % cathodic first is 0
 
-pulseAmpList = [20,20];
+pulseAmpList = [50,50];
 pulseWidthList = [200,200];
 polList = [0];
 
-chanList = [21];
-aux_chan = [55];
+chanList = [39];
+aux_chan = [21];
 aux_chan_wave = [3]; % 1 = cathodic first from pulseAmpList, 2 = anodic first from pulseAmpList, 3 = cathodic first small
-use_aux_chan = 1;
-nomFreq=10;
-nTests=80;
+use_aux_chan = 0;
+nomFreq=1000;
+nTests=4000;
 
 interpulseList = 53;
-prefix='Han_chan21stim_auxChan55_'; % no '_' needed;
-folder='C:\H_\';
+prefix='Han_dukeGen2'; % no '_' needed;
+folder='C:\H\';
 
 interphase=53;
 nPulses=1; % should almost always be 1. nTests sets train lengthand t
