@@ -38,7 +38,7 @@ nPulses = [125,125,125,100,100,100,75,75,75,50,50,50]*4.2; % 4 second long train
 folder='C:\H\';
 prefix=['Han_'];
 
-chanList = 10;
+chanList = 93;
 
 correctionFactor = -0.4; % ms correction
 
