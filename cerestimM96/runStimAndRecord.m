@@ -197,7 +197,7 @@ for j=1:maxChannels
         stimObj.endGroup();
         
         stimObj.endSequence();
-        stimObj.play(1);
+        stimObj.play();
         
         pause(1/nomFreq+rand/10);%wait a bit to get different timings relative to cerebus clock
         

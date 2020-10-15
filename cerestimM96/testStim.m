@@ -37,7 +37,7 @@ end
 
 stimObj.setStimPattern('waveform',1,...
                         'polarity',0,...
-                        'pulses',nPulses,...
+                        'pulses',1,...
                         'amp1',amp1,...
                         'amp2',amp2,...
                         'width1',pWidth1,...
@@ -47,7 +47,7 @@ stimObj.setStimPattern('waveform',1,...
                     
  stimObj.setStimPattern('waveform',2,...
                         'polarity',1,...
-                        'pulses',nPulses,...
+                        'pulses',1,...
                         'amp1',amp1,...
                         'amp2',amp2,...
                         'width1',pWidth1,...
@@ -66,7 +66,7 @@ stimObj.setStimPattern('waveform',3,...
                         'frequency',3000);                 
 
 %establish cerebus connection
-initializeCerebus();
+% initializeCerebus();
 %loop through channels and log a test file for each one:
 for j=1:numel(chanList)
     disp(['working on chan: ',num2str(chanList(j))])
@@ -87,29 +87,15 @@ for j=1:numel(chanList)
 %         end
 %     pause(8)
 
-    buildStimSequence(stimObj,chanList(j),[1],1000/nomFreq);
-%     stimObj.beginSequence()
-%     stimObj.beginGroup()
-%     stimObj.autoStim(chanList(j),1)
-% %     stimObj.autoStim(33,3)
-%     stimObj.endGroup()
-% 
-%     stimObj.wait(1000/nomFreq)
-% 
-%     
-%     stimObj.beginGroup()
-%     stimObj.autoStim(chanList(j),2)
-% %     stimObj.autoStim(33,3)
-%     stimObj.endGroup()
-%     
-%     stimObj.wait(1000/nomFreq)
-%     stimObj.endSequence()
+    buildStimSequence(stimObj,chanList(j),ones(nPulses,1),pulseWait);
 %     %deliver our stimuli:
-    stimObj.play(nTests); % apparently MATLAB is still running while the cerebus is sending stimulation
+    for i_test = 1:nTests
+        stimObj.play(1); % apparently MATLAB is still running while the cerebus is sending stimulation
     % we need to pause long enough for the nTests to be done otherwise
     % we get an error
 %     pause(2*(nTests+3)/nomFreq + nPulses*interpulse/(10^6) + 3) % pause for longer than needed just in case timing is off
-    pause(nTests/nomFreq + nPulses*interpulse/(10^6) + 2);
+        pause(1/nomFreq);
+    end
 % tell cerestim to stop stimulating (it should be done, but to prevent
     % errors)
     stimObj.stop();
@@ -118,7 +104,7 @@ for j=1:numel(chanList)
 %     cbmex('fileconfig',fName,'',0)
 end
 
-cbmex('close')
+% cbmex('close')
 stimObj.disconnect();
 stimObj.delete()
 clear stimObj
