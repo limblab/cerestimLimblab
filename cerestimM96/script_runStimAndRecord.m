@@ -25,54 +25,29 @@
 % folder: folder to save files in
 % prefix: prefix for file name
 %% 
-for mm = 2
+for mm = 1:21
     pause(1)
     disp(['stimulation iteration: ',num2str(mm)])
 
-    folder='C:\Han_20190920_stimrec\';
-    prefix='Han_20190920_leftS1_CObump_dukeProjBoxchan25_2'; % no underscore after prefix please
+    folder='C:\H\';
+    prefix='Han_20191217_leftS1_CObump_'; % no underscore after prefix please
 
     % all parameters need to be the same size matrix
-    amp1=[5,10,15,20,25,30,40,50,100,50,20,20];%in uA
-    pWidth1=[200,200,200,200,200,200,200,200,200,200,500,500];%in us
-    amp2=[5,10,15,20,25,30,40,50,100,50,50,50];%in uA
-    pWidth2=[200,200,200,200,200,200,200,200,200,200,200,200];%in us
+    amp1=[15,30,60,100];%in uA
+    pWidth1=[200,200,200,200];%in us
+    amp2=[15,30,60,100];%in uA
+    pWidth2=[200,200,200,200];%in us
 
-    interphase=[53,53,53,53,53,53,53,53,53,53,53,53];
-    interpulse=[53,53,53,53,53,53,53,53,53,53,53,53];
-    polarities = [0,0,0,0,0,0,0,0,0,1,0,1]; % 0 = cathodic first
+    interphase=[53,53,53,53];
+    interpulse=[53,53,53,53];
+    polarities = [0,0,0,0]; % 0 = cathodic first
 
-    nPulses=[1,1,1,1,1,1,1,1,1,1,1,1]; % pulses per train
+    nPulses=[1,1,1,1]; % pulses per train
 %     freq=1; %frequency of the trains. This may be overridden in runStimAnd Record
 
-    nomFreq=2; %how frequently we deliver a train, if trains are single pulse, this is the stim frequency
-    nTests=320; % # of trains
-    chanList = {25};
-    
-%     chanList=[3,5,12,13,33,37,43]; % pick some channels 4
-%         % all groups of 5 electrodes
-%         chanListAppend = {}; % DO NOT WRITE INTO THIS ONE
-%         chan_list_5 = perms(chanList);
-%         chan_list_5 = unique(sort(chan_list_5(:,1:5),2),'rows');
-%         chan_list_all = chanList;
-%         chanList = {};
-%         for i = 1:numel(chan_list_all)
-%             chanList{i} = chan_list_all(i);
-%         end
-%         for i = 1:size(chan_list_5,1)
-%             chanList{end+1} = chan_list_5(i,:);    
-%         end
-        
-%             % all combinations of those channels
-%       chanList = {29,31,36,50,57,61};
-%     chanList = {33,53,68,74,78,90,79};
-%             chanListAppend = {}; % DO NOT USE THIS ONE
-%             for c = 1:numel(chanList)
-%                 for j = c+1:numel(chanList)
-%                     chanListAppend{end+1} = [chanList{c},chanList{j}];
-%                 end
-%             end
-%             chanList = [chanList,chanListAppend];
+    nomFreq=10; %how frequently we deliver a train, if trains are single pulse, this is the stim frequency
+    nTests=1500; % # of trains
+    chanList = {2,6,7,14,19,22,28,33,35,44,45,50,52,57,60,66,67,73,78,80,84,87,90,91,93};
     
     arg = {'interleaveChanList',1};
         saveImpedance=0;

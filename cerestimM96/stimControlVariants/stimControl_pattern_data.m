@@ -23,7 +23,7 @@ stimWord=hex2dec('60');
 DBMask=hex2dec('f0');
 maxWait=400;%maximum interval to wait before exiting
 pollInterval=[0.01];%polling interval in s
-chan=151;%digital input is CH151
+chan=279;%digital input is CH279
 
 freq = floor(1/((pulseWidth*2+interphase+interpulse)*10^-6));
 

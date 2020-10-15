@@ -30,10 +30,13 @@ pWidth2 = pWidth1;
 interpulse = 53;
 interphase = 53;
 pol = 0; % 0 is cathodic first
-doublePulseLatency = 1000./[repmat(120,1,9),86,63,42]; % -1 = single pulse, % 20, 50, 100, 200
+% doublePulseLatency = 1000./[repmat(120,1,9),86,63,42]; % -1 = single pulse, % 20, 50, 100, 200
+doublePulseLatency = 1000./[repmat(180,1,9),116,86,56];
+
 amp1 = [repmat(40,1,12)];
 amp2 = amp1;
-nPulses = [8,8,8,14,14,14,27,27,27,ceil(86*4),ceil(63*4),ceil(43*4)]; % 14 pulses for 100ms
+% nPulses = [8,8,8,14,14,14,27,27,27,ceil(86*4),ceil(63*4),ceil(43*4)]; % 14 pulses for 100ms
+nPulses = [10,10,10,19,19,19,37,37,37,116*4,86*4,56*4];
 
 correctionFactor = -0.4; % ms correction
 
@@ -44,7 +47,7 @@ timeBetweenLongTrains = 16; % s, time between end of 1 4-s intermittent train an
 nTests = 12; % 
 num_files = 8;
 
-chanList = 94;
+chanList = 22;
 
 prefix=['Han_'];
 folder='C:\H\';

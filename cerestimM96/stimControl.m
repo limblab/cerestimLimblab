@@ -17,29 +17,16 @@
 
 %configure stim parameters
 
-usingStimSwitchToRecord = 1;
+usingStimSwitchToRecord = 0;
 
-% for i = 1:numel(chan_list_2)
-%     electrodeList{i} = chan_list_2(i);
-% end
-% electrodeList{1} = [26];
-% electrodeList{2} = [44];
+electrodeList{1} = [48];
+electrodeList{2} = [93];
 
-electrodeList{1} = [96];
-% electrodeList{2} = [73];
-% electrodeList{3} = [2];
-% electrodeList{4} = [12];
-% electrodeList{5} = [20];
-% electrodeList{6} = [96];
-% electrodeList{7} = [92];
-% electrodeList{8} = [42];
-% electrodeList{9} = [7];
-% electrodeList{10} = [57];
 
-stimAmp=[40];%different amplitudes of stimulation
+stimAmp=[60];%different amplitudes of stimulation
 pulseWidth=200;%time for each phase of a pulse in us
-freq = 100; % Hz
-trainLength=0.125;%length of the pulse train in s
+freq = 330; % Hz
+trainLength=0.2;%length of the pulse train in s
 interpulse = 53; %
 
 numPulses=ceil(freq*trainLength);
@@ -49,7 +36,7 @@ stimWord=hex2dec('60');
 DBMask=hex2dec('f0');
 maxWait=400;%maximum interval to wait before exiting
 pollInterval=[0.01];%polling interval in s
-chan=151;%digital input is CH151
+chan=279;%digital input is CH279
 
 nomFreq = floor(1/((pulseWidth*2+53+interpulse)*10^-6));
 
@@ -129,7 +116,6 @@ try
             end
             continue
         else%if we found some data:
-        
             %parse raw word data from the digital channel:
             %convert word into single byte that contains the limblab state info
             words=bitshift(bitand(hex2dec('FF00'),data{chan,3}),-8);
@@ -141,9 +127,9 @@ try
                 word_indices_keep = setxor(word_indices_remove,1:length(words));
                 words = words(word_indices_keep);
             end
-            if ~isempty(words)
+%             if ~isempty(words)
 %                 unique(words,'stable')
-            end
+%             end
 %             %debug:
 %             if ~isempty(words)
 %                 for i=1:numel(words)

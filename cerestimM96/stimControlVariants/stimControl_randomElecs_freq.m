@@ -10,32 +10,37 @@
 %same amplitude by repeating the amplitude definition.
 %
 %User must also configure pulse parameters
-clear all
+% clear all
 %script setup- 
 %general setup:
 
 %configure stim parameters
 
-usingStimSwitchToRecord = 0;
+master_electrode_list = [chans_to_use];
+EL_all = {};
+stim_code_all = [];
+% electrodeList{2}=[1];
+% electrodeList{3}=[2];
+% electrodeList{4}=[22];
+% electrodeList{5}=[62];
 
-freq=[50,100,150,200,250,300,350,400,450,500];%200;%frequency of pulses in Hz
-
-for i = 1:numel(freq)
-    electrodeList{i} = [19];
-end
+stimFreqs = [150,200,300];
+numElecs = [14,14,14];
 
 pulseWidth=200;%time for each phase of a pulse in uS
-stimAmps = 80;
+stimAmp = 20; % uA
+correctionFactor = 300; %us, measured delay between commands
 
-trainLength=0.25;%length of the pulse train in s
+trainLength=0.4;%length of the pulse train in s
 interpulse = 53;
-numPulses=freq*trainLength;
+interphase = 53;
+
 stimDelay=0;%0.115;%delays start of stim train to coincide with middle of force rise
 % configure cbmex parameters:
 stimWord=hex2dec('60');
 DBMask=hex2dec('f0');
 maxWait=400;%maximum interval to wait before exiting
-pollInterval=[];%polling interval in s
+pollInterval=[0.1];%polling interval in s
 chan=279;%digital input is CH279
 
 nomFreq = floor(1/((pulseWidth*2+53+interpulse)*10^-6));
@@ -70,31 +75,21 @@ try
     end
 
     %establish stimulation waveforms for each stimulation amplitude:
-    for i=1:numel(freq)
+    for i=1:numel(stimFreqs)
         %configure waveform:
         disp(['setting stim pattern; ',num2str(i)])
-        if(usingStimSwitchToRecord)
-            stimObj.setStimPattern('waveform',i,...
+        numPulses=ceil(stimFreqs(i)*trainLength);
+
+        stimObj.setStimPattern('waveform',i,...
                                 'polarity',0,...
-                                'pulses',1,...
-                                'amp1',stimAmps,...
-                                'amp2',stimAmps,...
+                                'pulses',numPulses,...
+                                'amp1',stimAmp,...
+                                'amp2',stimAmp,...
                                 'width1',pulseWidth,...
                                 'width2',pulseWidth,...
-                                'interphase',53,...
-                                'frequency',nomFreq);
-        else
-            stimObj.setStimPattern('waveform',i,...
-                                    'polarity',0,...
-                                    'pulses',numPulses(i),...
-                                    'amp1',stimAmps,...
-                                    'amp2',stimAmps,...
-                                    'width1',pulseWidth,...
-                                    'width2',pulseWidth,...
-                                    'interphase',53,...
-                                    'frequency',freq(i));
-        end
-        
+                                'interphase',interphase,...
+                                'frequency',stimFreqs(i));
+
     end
     h=msgbox('Central Connection is open: stimulation is running','CBmex-notifier');
     btnh=findobj(h,'style','pushbutton');
@@ -160,11 +155,16 @@ try
             stimCode=words(idx(1))-stimWord+1;
             disp(['stimulating with code: ',num2str(stimCode)])
                 
-            if stimCode>numel(electrodeList) || stimCode<1
+            if stimCode>numel(stimFreqs) || stimCode<1
                 warning('managed to get a bad stimcode, cant assign electrode group')
                 continue
             end
-            EL=electrodeList{stimCode};
+            
+            n_elecs = numElecs(stimCode);
+            
+            EL=master_electrode_list(randperm(numel(master_electrode_list),n_elecs))
+            EL_all{end+1} = EL;
+            stim_code_all(end+1) = stimCode;
             %and re-set the stimStart variable
             stimStart=toc(sessionTimer);
         end
@@ -172,15 +172,17 @@ try
         %stim command:
         tic
         % if using stim switch to record
-        if(usingStimSwitchToRecord)
-            buildStimSequence(stimObj,EL,repmat(stimCode,numPulses(stimCode),1),1000/freq(stimCode)); % wait takes in milliseconds
+            
+        if(numel(EL) > 16)
+            error('Not stimulating as the stimulator is not setup to use more than 16 electrodes');
         else
             buildStimSequence(stimObj,EL,stimCode,10); % wait takes in milliseconds
+            numPlays = 1;
         end
         
         pause(stimDelay-toc);
-        stimObj.play(1)
-        pause(trainLength + 0.1);
+        stimObj.play(numPlays)
+        pause(trainLength + 0.25);
         
         if ~isempty(pollInterval)
             pause(pollInterval)

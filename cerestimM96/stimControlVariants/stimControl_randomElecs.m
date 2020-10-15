@@ -34,17 +34,18 @@ pulseWidth=200;%time for each phase of a pulse in uS
 freq = 330; % Hz
 correctionFactor = 300; %us, measured delay between commands
 
-trainLength=0.12;%length of the pulse train in s
+trainLength=0.2;%length of the pulse train in s
 interpulse = 53;
 interphase = 53;
 numPulses=ceil(freq*trainLength);
+
 stimDelay=0;%0.115;%delays start of stim train to coincide with middle of force rise
 % configure cbmex parameters:
 stimWord=hex2dec('60');
 DBMask=hex2dec('f0');
 maxWait=400;%maximum interval to wait before exiting
 pollInterval=[0.1];%polling interval in s
-chan=151;%digital input is CH151
+chan=279;%digital input is CH279
 
 nomFreq = floor(1/((pulseWidth*2+53+interpulse)*10^-6));
 

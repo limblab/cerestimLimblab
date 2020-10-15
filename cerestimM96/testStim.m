@@ -23,17 +23,9 @@
 %nTests         :   number of times the script will issue a cathodal/anodal
 %                       stim pair
 %configure params
-freq=floor(1/((pWidth1+pWidth2+interphase+interpulse)*10^-6))%hz
+% freq=floor(1/((pWidth1+pWidth2+interphase+interpulse)*10^-6))%hz
 
-if ~exist('stimObj','var')
-    stimObj=cerestim96;
-    stimObj.connect();
-elseif ~stimObj.isConnected();
-    stimObj.connect();
-end
-if ~stimObj.isConnected();
-    error('testStim:noStimulator','could not establish connection to stimulator')
-end
+
 
 stimObj.setStimPattern('waveform',1,...
                         'polarity',0,...
@@ -70,41 +62,25 @@ initializeCerebus();
 %loop through channels and log a test file for each one:
 for j=1:numel(chanList)
     disp(['working on chan: ',num2str(chanList(j))])
-%     fName=startcerebusStimRecording(chanList(j),amp1,amp2,pWidth1,pWidth2,interpulse,j,folder,prefix,01);
+    fName=startcerebusStimRecording(chanList(j),amp1,amp2,pWidth1,pWidth2,interpulse,j,folder,prefix,01);
 %     fName = [fName,'_delay',num2str(signalDelay*100)];
-%         ctr=0;
-%         tmp=dir(folder);
-%         while isempty(cell2mat(strfind({tmp.name},fName))) & ctr<10
-%             cbmex('fileconfig',[folder,fName],'',0)
-%             pause(.5);
-%             cbmex('fileconfig',[folder,fName],'testing stimulation artifacts',1);
-%             pause(1);
-%             ctr=ctr+1;
-%             tmp=dir(folder);
-%         end
-%         if ctr==10
-%            warning('tried to start recording and failed') 
-%         end
-%     pause(8)
+        ctr=0;
+        tmp=dir(folder);
+        while isempty(cell2mat(strfind({tmp.name},fName))) & ctr<10
+            cbmex('fileconfig',[folder,fName],'',0)
+            pause(.5);
+            cbmex('fileconfig',[folder,fName],'testing stimulation artifacts',1);
+            pause(1);
+            ctr=ctr+1;
+            tmp=dir(folder);
+        end
+        if ctr==10
+           warning('tried to start recording and failed') 
+        end
+    pause(2)
 
     buildStimSequence(stimObj,chanList(j),[1],1000/nomFreq);
-%     stimObj.beginSequence()
-%     stimObj.beginGroup()
-%     stimObj.autoStim(chanList(j),1)
-% %     stimObj.autoStim(33,3)
-%     stimObj.endGroup()
-% 
-%     stimObj.wait(1000/nomFreq)
-% 
-%     
-%     stimObj.beginGroup()
-%     stimObj.autoStim(chanList(j),2)
-% %     stimObj.autoStim(33,3)
-%     stimObj.endGroup()
-%     
-%     stimObj.wait(1000/nomFreq)
-%     stimObj.endSequence()
-%     %deliver our stimuli:
+
     stimObj.play(nTests); % apparently MATLAB is still running while the cerebus is sending stimulation
     % we need to pause long enough for the nTests to be done otherwise
     % we get an error

@@ -9,15 +9,17 @@
 % to 16 channels. 
 % freq_all_norm is a 15x1 array containing the normalized frequencies for each waveform.
 
-max_freq = 330;
-freq_all = input_data.freq_all_norm*max_freq;
+max_freq = 250;
+freq_all_norm = linspace(0,1,16);
+freq_all_norm = freq_all_norm(2:end);
+freq_all = freq_all_norm*max_freq;
 
 usingStimSwitchToRecord = 0;
 
-stimAmp=20;%different amplitudes of stimulation
+stimAmp=30;%different amplitudes of stimulation
 pulseWidth=200;%time for each phase of a pulse in uS
-trainLength=0.12;%length of the pulse train in s
-interpulse = 250;
+trainLength=0.05;%length of the pulse train in s
+interpulse = 53;
 
 stimDelay=0;%0.115;%delays start of stim train to coincide with middle of force rise
 % configure cbmex parameters:
@@ -25,7 +27,7 @@ stimWord=hex2dec('60');
 DBMask=hex2dec('f0');
 maxWait=400;%maximum interval to wait before exiting
 pollInterval=[0.01];%polling interval in s
-chan=151;%digital input is CH151
+chan=279;%digital input is CH279
 
 nomFreq = floor(1/((pulseWidth*2+53+interpulse)*10^-6));
 
@@ -61,8 +63,9 @@ try
     %establish stimulation waveforms for each stimulation amplitude:
         %configure waveform:
         
-%     disp(['setting stim pattern; ',num2str(i)])
+    
     for i = 1:15
+        disp(['setting stim pattern; ',num2str(i)])
         freq = ceil(freq_all(i));
         numPulses=ceil(freq*trainLength);
         stimObj.setStimPattern('waveform',i,...
@@ -97,7 +100,7 @@ try
             end
             continue
         else%if we found some data:
-        
+            
             %parse raw word data from the digital channel:
             %convert word into single byte that contains the limblab state info
             words=bitshift(bitand(hex2dec('FF00'),data{chan,3}),-8);
@@ -109,9 +112,9 @@ try
                 word_indices_keep = setxor(word_indices_remove,1:length(words));
                 words = words(word_indices_keep);
             end
-            if ~isempty(words)
+%             if ~isempty(words)
 %                 unique(words,'stable')
-            end
+%             end
 %             %debug:
 %             if ~isempty(words)
 %                 for i=1:numel(words)

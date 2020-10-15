@@ -15,32 +15,18 @@
 
 %configure stim parameters
 
-usingStimSwitchToRecord = 0;
+recordingOnStimChannel = 1;
 
-stimAmps=[50,60,70,70,80,90];%different amplitudes of stimulation, this is per electrode
-% electrodeList{1} = [21];
-% electrodeList{2} = [21];
-
+stimAmps=[10,20,30,40,50,60,70,80,90,100];%different amplitudes of stimulation, this is per electrode
+% stimAmps = [5,10,15,20,25,30,35,40];
 electrodeList = {};
-% for i = 1:numel(stimAmps)
-%     electrodeList{i} = 44; % 73 for duncan
-% end
-% electrodeList{1} = [44];
-% electrodeList{2} = [44];
-
-electrodeList{1} = [26];
-electrodeList{2} = [26];
-electrodeList{3} = [26];
-electrodeList{4} = [44];
-
-electrodeList{5} = [44];
-electrodeList{6} = [44];
-% electrodeList{7} = [12,13,22,30];
-% electrodeList{8} = [6,25,61,86];
+for i = 1:numel(stimAmps)
+    electrodeList{i} = [48];
+end
 
 pulseWidth=200;%time for each phase of a pulse in us
-freq = 300; % Hz
-trainLength=0.4;%length of the pulse train in s
+freq = 200; % Hz
+trainLength=0.005;%length of the pulse train in s
 interpulse = 53;
 numPulses=freq*trainLength;
 stimDelay=0;%0.115;%delays start of stim train to coincide with middle of force rise
@@ -49,7 +35,7 @@ stimWord=hex2dec('60');
 DBMask=hex2dec('f0');
 maxWait=400;%maximum interval to wait before exiting
 pollInterval=[0.1];%polling interval in s
-chan=151;%digital input is CH151
+chan=279;%digital input is CH279
 
 nomFreq = floor(1/((pulseWidth*2+53+interpulse)*10^-6));
 
@@ -86,7 +72,7 @@ try
     for i=1:numel(stimAmps)
         %configure waveform:
         disp(['setting stim pattern; ',num2str(i)])
-        if(usingStimSwitchToRecord)
+        if(recordingOnStimChannel)
             stimObj.setStimPattern('waveform',i,...
                                 'polarity',0,...
                                 'pulses',1,...
@@ -187,7 +173,7 @@ try
         %stim command:
         tic
         % if using stim switch to record
-        if(usingStimSwitchToRecord)
+        if(recordingOnStimChannel)
             buildStimSequence(stimObj,EL,repmat(stimCode,numPulses,1),1000/freq); % wait takes in milliseconds
         else
             buildStimSequence(stimObj,EL,stimCode,10); % wait takes in milliseconds

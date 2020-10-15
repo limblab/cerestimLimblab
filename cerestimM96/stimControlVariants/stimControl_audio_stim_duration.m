@@ -18,25 +18,36 @@ clear all
 
 usingStimSwitchToRecord = 0;
 
-freq=[50,100,150,200,250,300,350,400,450,500];%200;%frequency of pulses in Hz
-
-for i = 1:numel(freq)
-    electrodeList{i} = [19];
+stimTrainLengths=[0.5,1,2];%different train lengths of stimulation
+audioTrainLengths=[0.25,0.7,3];%different train lengths of audio cue
+for i = 1:numel(stimTrainLengths)
+    electrodeList{i} = [56]; % 56
 end
-
+% stim parameters
 pulseWidth=200;%time for each phase of a pulse in uS
-stimAmps = 80;
-
-trainLength=0.25;%length of the pulse train in s
+freq = 50; % Hz
+stimAmp = 10; % uA
 interpulse = 53;
-numPulses=freq*trainLength;
-stimDelay=0;%0.115;%delays start of stim train to coincide with middle of force rise
+interphase = 53;
+numPulses=freq*stimTrainLengths;
+stimDelay=0;%delays start of stim train to coincide with middle of force rise
+
+% audio parameters
+audioDelay = 0; % s
+audioMaxAmp = [350,350,350,350,350,350,350,350,...
+    1500,1500,1500,1500,1500,1500,1500,1500]; % mV
+audioFreq = 500; % Hz
+audioTrainLengths = [0.25,0.5,0.75,1,1.5,2,2.5,3,...
+    0.25,0.5,0.75,1,1.5,2,2.5,3]; % s
+
+
 % configure cbmex parameters:
 stimWord=hex2dec('60');
+audioWord=hex2dec('80');
 DBMask=hex2dec('f0');
 maxWait=400;%maximum interval to wait before exiting
-pollInterval=[];%polling interval in s
-chan=279;%digital input is CH279
+pollInterval=[0.01];%polling interval in s
+chan=279;%digital input is CH279 for new cerebus
 
 nomFreq = floor(1/((pulseWidth*2+53+interpulse)*10^-6));
 
@@ -70,15 +81,15 @@ try
     end
 
     %establish stimulation waveforms for each stimulation amplitude:
-    for i=1:numel(freq)
+    for i=1:numel(stimTrainLengths)
         %configure waveform:
         disp(['setting stim pattern; ',num2str(i)])
         if(usingStimSwitchToRecord)
             stimObj.setStimPattern('waveform',i,...
                                 'polarity',0,...
                                 'pulses',1,...
-                                'amp1',stimAmps,...
-                                'amp2',stimAmps,...
+                                'amp1',stimAmp,...
+                                'amp2',stimAmp,...
                                 'width1',pulseWidth,...
                                 'width2',pulseWidth,...
                                 'interphase',53,...
@@ -87,12 +98,12 @@ try
             stimObj.setStimPattern('waveform',i,...
                                     'polarity',0,...
                                     'pulses',numPulses(i),...
-                                    'amp1',stimAmps,...
-                                    'amp2',stimAmps,...
+                                    'amp1',stimAmp,...
+                                    'amp2',stimAmp,...
                                     'width1',pulseWidth,...
                                     'width2',pulseWidth,...
                                     'interphase',53,...
-                                    'frequency',freq(i));
+                                    'frequency',freq);
         end
         
     end
@@ -132,55 +143,59 @@ try
             if ~isempty(words)
 %                 unique(words,'stable')
             end
-%             %debug:
-%             if ~isempty(words)
-%                 for i=1:numel(words)
-%                     if words(i)<200
-%                         disp(['found word: ',num2str(words(i))])
-%                     end
-%                 end
-%                 wordlog=[ts,words];
-%             end
-            %disp(['et=',num2str(toc(sessionTimer)),' numWords=',num2str(length(words))]) %debug
+
             %check if the words we found were stim words:
+            is_stim=0; is_audio=0;
             idx=find(bitand(words,DBMask)==stimWord);
+            if(~isempty(idx))
+                is_stim = 1;
+                stimCode=words(idx(1))-stimWord+1;
+                disp(['stimulating with code: ',num2str(stimCode)])
+                if stimCode>numel(electrodeList) || stimCode<1
+                    warning('managed to get a bad stimcode, cant assign electrode group')
+                    continue
+                end
+                EL=electrodeList{stimCode};
+            end
+            idx=find(bitand(words,DBMask)==audioWord);
+            if(~isempty(idx))
+                is_audio=1;
+                audioCode=words(idx(1))-audioWord+1;
+                disp(['audio code: ', num2str(audioCode)]);
+            end
             %if we found no stim words, continue:
-            if isempty(idx)
+            if ~is_stim && ~is_audio
                 if ~isempty(pollInterval)
                     pause(pollInterval)
                 end
                 continue
             end
-            if stimStart+trainLength>=toc(sessionTimer)
+            if stimStart+stimTrainLengths(end)>=toc(sessionTimer)
                 %this is a re-throw of the same word (we usually pull the same word 3 times)
                 continue
             end
-            %if we got to this point we have a valid stim word; convert it
-            %to a code:
-            stimCode=words(idx(1))-stimWord+1;
-            disp(['stimulating with code: ',num2str(stimCode)])
-                
-            if stimCode>numel(electrodeList) || stimCode<1
-                warning('managed to get a bad stimcode, cant assign electrode group')
-                continue
-            end
-            EL=electrodeList{stimCode};
             %and re-set the stimStart variable
             stimStart=toc(sessionTimer);
         end
-        %if we got here, then we found a stim word. use the code to issue a
+        %if we got here, then we found a stim or audio word. use the code to issue a
         %stim command:
-        tic
         % if using stim switch to record
-        if(usingStimSwitchToRecord)
-            buildStimSequence(stimObj,EL,repmat(stimCode,numPulses(stimCode),1),1000/freq(stimCode)); % wait takes in milliseconds
-        else
+        maxDelay = 0;
+        if(is_stim)
+            pause(stimDelay-toc);
             buildStimSequence(stimObj,EL,stimCode,10); % wait takes in milliseconds
+            stimObj.play(1)
+            maxDelay = stimTrainLengths(stimCode);
         end
         
-        pause(stimDelay-toc);
-        stimObj.play(1)
-        pause(trainLength + 0.1);
+        if(is_audio)
+            pause(audioDelay-toc);
+            [audioSequence, audioReps] = buildAudioSequence(audioTrainLengths(audioCode), audioFreq, audioMaxAmp(audioCode));
+            cbmex('analogout', 1, 'sequence', audioSequence, 'repeats',audioReps);
+            maxDelay = max(audioTrainLengths(audioCode), audioTrainLengths(audioCode));
+        end
+        
+        pause(maxDelay*1.2);
         
         if ~isempty(pollInterval)
             pause(pollInterval)

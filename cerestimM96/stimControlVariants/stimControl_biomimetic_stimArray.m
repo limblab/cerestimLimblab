@@ -4,20 +4,23 @@
 % which channel to stimulate with at a given time
 for i = 1:numel(stim_array)
     stim_array{i}.stim_pattern = squeeze(stim_array{i}.stim_pattern);
+    stim_array{i}.chans = 1:1:numel(stim_array{i}.chans);
 end
 
-stimAmp=10;%different amplitudes of stimulation
+wave_num = [1,1,2,2,3,3];
+
+stimAmp=[10,20,30];%different amplitudes of stimulation
 pulseWidth=200;%time for each phase of a pulse in uS
-trainLength=0.3;%length of the pulse train in s
+trainLength=0.25;%length of the pulse train in s
 interpulse = 53;
 
-stimDelay=0.025;%0.115;%delays start of stim train to coincide with middle of force rise
+stimDelay=0.0;%0.115;%delays start of stim train to coincide with middle of force rise
 % configure cbmex parameters:
 stimWord=hex2dec('60');
 DBMask=hex2dec('f0');
 maxWait=400;%maximum interval to wait before exiting
 pollInterval=[0.01];%polling interval in s
-chan=151;%digital input is CH151
+chan=279;%digital input is CH279
 
 nomFreq = floor(1/((pulseWidth*2+53+interpulse)*10^-6));
 
@@ -56,16 +59,17 @@ try
         
 %     disp(['setting stim pattern; ',num2str(i)])
     numPulses = 1;
-    
-    stimObj.setStimPattern('waveform',1,...
+    for i_amp = 1:numel(stimAmp)
+        stimObj.setStimPattern('waveform',i_amp,...
                             'polarity',0,...
                             'pulses',numPulses,...
-                            'amp1',stimAmp,...
-                            'amp2',stimAmp,...
+                            'amp1',stimAmp(i_amp),...
+                            'amp2',stimAmp(i_amp),...
                             'width1',pulseWidth,...
                             'width2',pulseWidth,...
                             'interphase',53,...
                             'frequency',nomFreq);
+    end
     
     h=msgbox('Central Connection is open: stimulation is running','CBmex-notifier');
     btnh=findobj(h,'style','pushbutton');
@@ -142,11 +146,11 @@ try
         %stim command:
 
         % if using stim switch to record
-        useStimArrayToStimulate(stimObj,stim_array{stimCode}); % wait takes in milliseconds
+        useStimArrayToStimulate(stimObj,stim_array{stimCode},wave_num(stimCode)); % wait takes in milliseconds
         
         pause(stimDelay-toc);
         stimObj.play(1)
-        pause(trainLength + 0.1);
+        pause(trainLength + 0.4);
         
         if ~isempty(pollInterval)
             pause(pollInterval)

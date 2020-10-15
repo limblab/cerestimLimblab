@@ -1,6 +1,6 @@
-chanList = 32;
+chanList = 1;
 
-amp = 70;
+amp = 20;
 amp1=[amp];%in uA
 pWidth1=[200];%in us
 amp2=[amp];%in uA
@@ -20,6 +20,6 @@ pol = 0;
 folder         =   'C:\data\Crackle\RightCuneate\';
 prefix         =   'Crackle_20190413_stimTest';
 
- pause(4)
+%  pause(4)
  
 testStim;
