@@ -25,38 +25,33 @@
 % folder: folder to save files in
 % prefix: prefix for file name
 %% 
-for mm = 1:21
+
+for mm = 1
     pause(1)
     disp(['stimulation iteration: ',num2str(mm)])
 
-    folder='C:\H\';
-    prefix='Han_20191217_leftS1_CObump_'; % no underscore after prefix please
+    folder='E:\Data-lab1\18E3-Pop\CerebusData\20200930\';
+    prefix='Pop_20200930_test'; % no underscore after prefix please
 
     % all parameters need to be the same size matrix
-    amp1=[15,30,60,100];%in uA
-    pWidth1=[200,200,200,200];%in us
-    amp2=[15,30,60,100];%in uA
-    pWidth2=[200,200,200,200];%in us
+    amp1=[20,40];%in uA
+    pWidth1=[200,200];%in us
+    amp2=[20,40];%in uA
+    pWidth2=[200,200];%in us
 
-    interphase=[53,53,53,53];
-    interpulse=[53,53,53,53];
-    polarities = [0,0,0,0]; % 0 = cathodic first
+    interphase=[53,53];
+    interpulse=[53,53];
+    polarities = [0,0]; % 0 = cathodic first
 
-    nPulses=[1,1,1,1]; % pulses per train
-%     freq=1; %frequency of the trains. This may be overridden in runStimAnd Record
+    nPulses=[1,1]; % pulses per train
+    freq=[100,100]; %frequency of the trains. This may be overridden in runStimAnd Record
 
-    nomFreq=10; %how frequently we deliver a train, if trains are single pulse, this is the stim frequency
-    nTests=1500; % # of trains
-    chanList = {2,6,7,14,19,22,28,33,35,44,45,50,52,57,60,66,67,73,78,80,84,87,90,91,93};
+    nomFreq=0.5; %how frequently we deliver a train, if trains are single pulse, this is the stim frequency
+    nTests=10; % # of trains
+    chanList = {25};
     
     arg = {'interleaveChanList',1};
         saveImpedance=0;
-    %     if(mm == 1)
-    %         saveImpedance = 1;
-    %     else
-    %         saveImpedance = 0;
-    %     end
-
     runStimAndRecord;
 end
 disp('done')
